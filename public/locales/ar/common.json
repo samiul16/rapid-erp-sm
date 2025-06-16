@@ -1,0 +1,25 @@
+{
+  "sidebar": {
+    "menu": {
+      "search": "بحث",
+      "dashboard": "لوحة التحكم",
+      "pos": "نقاط البيع",
+      "table": "طاولة",
+      "waiters": "النوادل"
+    },
+    "search": {
+      "placeholder": "ابحث...",
+      "results": "نتائج البحث عن: {{query}}",
+      "tabs": {
+        "general": "عام",
+        "favourite": "المفضلة",
+        "recent": "حديث"
+      }
+    },
+    "dashboard": {
+      "title": "لوحة التحكم",
+      "content": "محتوى لوحة التحكم هنا..."
+    },
+    "close": "إغلاق"
+  }
+}
