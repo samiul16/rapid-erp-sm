@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom"; // Add this import
 import {
   Search,
   LayoutDashboard,
@@ -7,11 +8,13 @@ import {
   UtensilsCrossed,
   Users,
   X,
+  Globe,
 } from "lucide-react";
 import clsx from "clsx";
 
 const Sidebar = () => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate(); // Initialize useNavigate
   const [activeMenu, setActiveMenu] = useState("search");
   const [subSidebarWidth, setSubSidebarWidth] = useState("w-0");
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,20 +22,48 @@ const Sidebar = () => {
   const isRTL = i18n.language === "ar";
 
   const menuItems = [
-    { key: "search", icon: Search, label: t("sidebar.menu.search") },
+    {
+      key: "search",
+      icon: Search,
+      label: t("sidebar.menu.search"),
+      path: "/search",
+    },
     {
       key: "dashboard",
       icon: LayoutDashboard,
       label: t("sidebar.menu.dashboard"),
+      path: "/dashboard",
     },
-    { key: "pos", icon: ShoppingCart, label: t("sidebar.menu.pos") },
-    { key: "table", icon: UtensilsCrossed, label: t("sidebar.menu.table") },
-    { key: "waiters", icon: Users, label: t("sidebar.menu.waiters") },
+    {
+      key: "pos",
+      icon: ShoppingCart,
+      label: t("sidebar.menu.pos"),
+      path: "/pos",
+    },
+    {
+      key: "table",
+      icon: UtensilsCrossed,
+      label: t("sidebar.menu.table"),
+      path: "/tables",
+    },
+    {
+      key: "waiters",
+      icon: Users,
+      label: t("sidebar.menu.waiters"),
+      path: "/waiters",
+    },
+    {
+      key: "country",
+      icon: Globe,
+      label: t("sidebar.menu.country"),
+      path: "/countries",
+    },
   ];
 
-  const handleMenuClick = (key: string) => {
+  const handleMenuClick = (key: string, path: string) => {
     setActiveMenu(key);
     setSubSidebarWidth("w-64");
+    navigate(path); // Navigate to the corresponding page
   };
 
   const closeSubSidebar = () => {
@@ -48,20 +79,31 @@ const Sidebar = () => {
           isRTL ? "border-l" : "border-r"
         )}
       >
-        {menuItems.map(({ key, icon: Icon, label }) => (
-          <div
+        {menuItems.map(({ key, icon: Icon, label, path }) => (
+          <button
             key={key}
             className={clsx(
-              "relative group flex flex-col items-center text-gray-500 dark:text-gray-300 cursor-pointer hover:text-brand transition-all",
+              "relative group flex flex-col items-center transition-all",
               {
-                "text-brand font-semibold": activeMenu === key,
+                "text-blue-500 dark:text-blue-400": activeMenu === key,
+                "text-gray-500 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400":
+                  activeMenu !== key,
               }
             )}
-            onClick={() => handleMenuClick(key)}
+            onClick={() => handleMenuClick(key, path)}
           >
             <Icon className="w-6 h-6" />
             <span className="text-[10px] mt-1 whitespace-nowrap">{label}</span>
-          </div>
+            {/* Active indicator */}
+            {activeMenu === key && (
+              <div
+                className={clsx(
+                  "absolute h-8 w-1 bg-blue-500 rounded-full",
+                  isRTL ? "left-0" : "right-0"
+                )}
+              />
+            )}
+          </button>
         ))}
       </div>
 

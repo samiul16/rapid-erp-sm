@@ -5,6 +5,9 @@ import Dashboard from "./pages/Dashboard";
 import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import ForgotPassword from "./pages/ForgotPassword";
+import CountryPage from "./pages/Country/CountryPage";
+import CountryDetails from "./pages/Country/CountryDetails";
+import CountryFormPage from "./pages/Country/CreateEditPage";
 
 function App() {
   return (
@@ -18,6 +21,17 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/search" element={<Dashboard />} />
+            <Route path="/countries" element={<CountryPage />} />
+            <Route path="/countries/:id" element={<CountryDetails />} />
+            <Route
+              path="/countries/create"
+              element={<CountryFormPage isEdit={false} />}
+            />
+            <Route
+              path="/countries/:id/edit"
+              element={<CountryFormPage isEdit={true} />}
+            />
             {/* Add other pages here */}
           </Route>
         </Route>

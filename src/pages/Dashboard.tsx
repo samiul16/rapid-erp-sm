@@ -1,5 +1,11 @@
+import CountryDataTable from "./Country/CountryDataTable";
+
 const Dashboard = () => {
-  return <div>Dashboard</div>;
+  return (
+    <div className="">
+      <CountryDataTable />
+    </div>
+  );
 };
 
 export default Dashboard;

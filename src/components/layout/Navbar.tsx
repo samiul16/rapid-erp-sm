@@ -6,8 +6,10 @@ import {
   MoonIcon,
   UserCircle,
   Search,
-  ArrowRight,
   ArrowLeft,
+  Maximize2,
+  Bell,
+  Heart,
 } from "lucide-react";
 import LanguageToggle from "../LanguageToggle";
 import clsx from "clsx";
@@ -17,11 +19,29 @@ const Navbar = () => {
   const { t, i18n } = useTranslation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [notificationCount] = useState(3); // Example count
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isRTL = i18n.language === "ar";
 
+  // Toggle fullscreen mode
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    }
+  };
+
+  // Close search when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -36,6 +56,7 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Focus input when search opens
   useEffect(() => {
     if (isSearchOpen && inputRef.current) {
       inputRef.current.focus();
@@ -71,12 +92,12 @@ const Navbar = () => {
               <button
                 onClick={toggleSearch}
                 className={clsx(
-                  "p-1.5 text-gray-500 dark:text-gray-400 border-3",
+                  "p-2 text-gray-500 dark:text-gray-400",
                   isRTL ? "order-last" : "order-first"
                 )}
                 aria-label={t("navbar.search.close")}
               >
-                {isRTL ? <ArrowLeft size={18} /> : <ArrowRight size={18} />}
+                <ArrowLeft size={18} />
               </button>
               <input
                 ref={inputRef}
@@ -85,8 +106,8 @@ const Navbar = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={clsx(
-                  "w-full py-1 bg-transparent border-0 focus:ring-0 text-gray-700 dark:text-gray-300",
-                  isRTL ? "pr-1 text-right" : "pl-2 text-left"
+                  "w-full py-2 bg-transparent border-0 focus:ring-0 text-gray-700 dark:text-gray-300",
+                  isRTL ? "pr-2 text-right" : "pl-2 text-left"
                 )}
                 dir={i18n.language}
               />
@@ -94,37 +115,81 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Search Toggle Button - Only visible when search is closed */}
-        {!isSearchOpen && (
+        {/* Icons Container */}
+        <div className="flex items-center space-x-1 sm:space-x-3">
+          {/* Search Toggle Button - Only visible when search is closed */}
+          {!isSearchOpen && (
+            <button
+              onClick={toggleSearch}
+              className="p-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+              aria-label={t("navbar.search.open")}
+            >
+              <Search size={20} />
+            </button>
+          )}
+
+          {/* Fullscreen Toggle */}
           <button
-            onClick={toggleSearch}
-            className="inline-flex items-center justify-center rounded-full p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            aria-label={t("navbar.search.open")}
+            onClick={toggleFullscreen}
+            className="p-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            aria-label={
+              isFullscreen
+                ? t("navbar.exitFullscreen")
+                : t("navbar.enterFullscreen")
+            }
           >
-            <Search size={20} />
+            <Maximize2 size={20} />
           </button>
-        )}
 
-        <div className="scale-110 sm:scale-125">
-          <LanguageToggle />
+          {/* Notifications with Badge */}
+          <div className="relative">
+            <button
+              className="p-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+              aria-label={t("navbar.notifications")}
+            >
+              <Bell size={20} />
+              {notificationCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {notificationCount}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Favorites */}
+          <button
+            className="p-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            aria-label={t("navbar.favorites")}
+          >
+            <Heart size={20} />
+          </button>
+
+          {/* Language Toggle */}
+          <div className="">
+            <LanguageToggle />
+          </div>
+
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            aria-label={
+              theme === "dark"
+                ? t("navbar.theme.light")
+                : t("navbar.theme.dark")
+            }
+          >
+            {theme === "dark" ? <SunIcon size={20} /> : <MoonIcon size={20} />}
+          </button>
+
+          {/* User Profile */}
+          <button
+            className="p-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            aria-label={t("navbar.user")}
+          >
+            <UserCircle size={20} />
+          </button>
         </div>
-
-        <button
-          onClick={toggleTheme}
-          className="inline-flex items-center justify-center rounded-full p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          aria-label={
-            theme === "dark" ? t("navbar.theme.light") : t("navbar.theme.dark")
-          }
-        >
-          {theme === "dark" ? <SunIcon size={20} /> : <MoonIcon size={20} />}
-        </button>
-
-        <button
-          className="inline-flex items-center justify-center rounded-full p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          aria-label={t("navbar.user")}
-        >
-          <UserCircle size={20} />
-        </button>
       </div>
     </nav>
   );

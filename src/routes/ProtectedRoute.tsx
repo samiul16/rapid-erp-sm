@@ -6,6 +6,7 @@ const ProtectedRoute = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (state: any) => state.auth.isAuthenticated
   );
+  console.log("isAuthenticated", isAuthenticated);
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" />;
 };
 

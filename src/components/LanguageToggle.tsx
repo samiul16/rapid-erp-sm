@@ -15,7 +15,7 @@ const LanguageToggle = () => {
   return (
     <button
       onClick={toggleLang}
-      className="ml-4 px-2 py-1 rounded bg-gray-100 dark:bg-gray-700"
+      className="ml-2 px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 cursor-pointer"
     >
       {i18n.language === "ar" ? "EN" : "عربى"}
     </button>
