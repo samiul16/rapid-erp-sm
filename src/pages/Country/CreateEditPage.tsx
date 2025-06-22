@@ -205,11 +205,12 @@ export default function CountryFormPage({ isEdit = false }: Props) {
           {/* First Row: Code, Country, Default */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 items-end">
             {/* Country Code - 3 columns */}
-            <div className="md:col-span-3 space-y-2">
+            <div className="md:col-span-3 space-y-1">
               <Label htmlFor="code">{t("form.countryCode")}</Label>
               <EditableInput
                 id="code"
                 name="code"
+                className="h-10"
                 value={formData.code}
                 onChange={handleChange}
                 onNext={() => {
@@ -230,6 +231,7 @@ export default function CountryFormPage({ isEdit = false }: Props) {
                 <EditableInput
                   id="callingCode"
                   name="callingCode"
+                  className="h-10"
                   value={formData.callingCode}
                   onChange={handleChange}
                   onNext={() => {
@@ -251,6 +253,7 @@ export default function CountryFormPage({ isEdit = false }: Props) {
               <EditableInput
                 id="title"
                 name="title"
+                className="h-10"
                 value={formData.title}
                 onChange={handleChange}
                 onNext={() => {

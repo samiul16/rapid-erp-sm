@@ -12,6 +12,7 @@ const EditableInput = ({
   placeholder,
   maxLength,
   required = false,
+  className = "",
 }: {
   id: string;
   name: string;
@@ -22,6 +23,7 @@ const EditableInput = ({
   placeholder?: string;
   maxLength?: number;
   required?: boolean;
+  className?: string;
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isTouched, setIsTouched] = useState(false);
@@ -90,7 +92,7 @@ const EditableInput = ({
           !isValid && isTouched
             ? "border-red-500 focus-visible:ring-red-500"
             : ""
-        }`}
+        } ${className}`}
       />
       {value && (
         <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-1">
@@ -110,9 +112,13 @@ const EditableInput = ({
           </button>
         </div>
       )}
-      {!isValid && isTouched && (
-        <p className="mt-1 text-xs text-red-500">This field is required</p>
-      )}
+
+      {/* Reserve space for error message */}
+      <div className="mt-1 min-h-[1rem]">
+        {!isValid && isTouched && (
+          <p className="text-xs text-red-500">This field is required</p>
+        )}
+      </div>
     </div>
   );
 };
