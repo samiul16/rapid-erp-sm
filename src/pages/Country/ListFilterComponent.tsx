@@ -36,7 +36,7 @@ export default function FilterComponent({
   };
 
   return (
-    <div className="w-72 h-[250px] flex flex-col border rounded-lg overflow-hidden">
+    <div className="w-72 h-[302px] flex flex-col border rounded-lg overflow-hidden">
       {/* Header */}
       <div className="bg-white dark:bg-gray-900 border-b px-3 py-2">
         <div className="flex items-center gap-2">

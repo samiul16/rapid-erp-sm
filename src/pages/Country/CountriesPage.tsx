@@ -5,8 +5,10 @@ import CountryGrid from "./CountriesGrid";
 import CountryDataTable from "./CountryDataTable";
 import YoutubeButton from "@/components/common/YoutubeButton";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 
 export default function CountryPage() {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const { t } = useTranslation();
 
@@ -28,7 +30,10 @@ export default function CountryPage() {
       <div className="flex items-center gap-4 mb-4">
         <YoutubeButton videoId={videoId} />
         <h1 className="text-2xl font-bold flex-1 text-blue-400">Countries</h1>
-        <Button className="bg-blue-400 hover:bg-blue-700 text-white rounded-full cursor-pointer">
+        <Button
+          className="bg-blue-400 hover:bg-blue-700 text-white rounded-full cursor-pointer"
+          onClick={() => navigate("/countries/create")}
+        >
           <span className="hidden sm:inline">{t("button.create")}</span>
           <span className="sm:hidden">{t("button.create")}</span>
         </Button>

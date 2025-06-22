@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import YoutubeButton from "@/components/common/YoutubeButton";
 import EditableInput from "@/components/common/EditableInput";
+import { useNavigate } from "react-router-dom";
 
 type CountryData = {
   code: string;
@@ -44,6 +45,7 @@ export default function CountryFormPage({ isEdit = false }: Props) {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const navigate = useNavigate();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -187,6 +189,7 @@ export default function CountryFormPage({ isEdit = false }: Props) {
               variant="outline"
               size="sm"
               className="gap-2 bg-blue-400 hover:bg-blue-600 text-white cursor-pointer"
+              onClick={() => navigate("/countries")}
             >
               {t("button.list")}
             </Button>

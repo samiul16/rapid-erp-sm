@@ -41,14 +41,17 @@ import { Filter, X, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EditableStatusCell } from "./EditableStatusCell";
 import { useTranslation } from "react-i18next";
+import { useDisclosure } from "@mantine/hooks";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-import ImportModal from "./ImportModal";
-import { ExportComponent } from "./ExportComponent";
-import FilterComponent from "./FilterComponent";
+import { ExportComponent } from "./ListExportComponent";
+import FilterComponent from "./ListFilterComponent";
+import ColumnVisibilityPanel from "./ListVisibilityComponent";
+import ImportStepper from "@/components/common/ImportStepper";
+import { Modal } from "@mantine/core";
 
 type Country = {
   id: string;
@@ -195,12 +198,17 @@ export default function CountryDataTable({
     columnId: "",
   });
   const tableRef = useRef<HTMLTableElement>(null);
-  const [open, setOpen] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const { t } = useTranslation();
+  const [showVisibility, setShowVisibility] = useState(false);
+  const [modalData] = useState({
+    title: "Import Country",
+    message: <ImportStepper />,
+  });
+  const [opened, { open: openModal, close: closeModal }] = useDisclosure(false);
 
   const columns = useMemo<ColumnDef<Country>[]>(
     () => [
@@ -418,7 +426,7 @@ export default function CountryDataTable({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
-  const [columnSearch, setColumnSearch] = useState("");
+  // const [columnSearch, setColumnSearch] = useState("");
   const [allColumnsVisible, setAllColumnsVisible] = useState(
     table
       .getAllColumns()
@@ -556,13 +564,24 @@ export default function CountryDataTable({
             <Button
               variant="outline"
               className="gap-2 cursor-pointer"
-              onClick={() => setOpen(true)}
+              onClick={() => openModal()}
             >
               <Import className="h-4 w-4" />
               <span className="hidden sm:inline">{t("common.import")}</span>
             </Button>
 
-            <ImportModal open={open} onClose={() => setOpen(false)} />
+            <Modal
+              opened={opened}
+              onClose={closeModal}
+              title="Import Country"
+              size="xl"
+              overlayProps={{
+                backgroundOpacity: 0.55,
+                blur: 3,
+              }}
+            >
+              <div className="pt-5 pb-14 px-5">{modalData.message}</div>
+            </Modal>
 
             {/* Bulk actions - only show when rows are selected */}
             {selectedRows.length > 0 && (
@@ -635,7 +654,9 @@ export default function CountryDataTable({
 
             <Button
               variant="outline"
-              className="gap-2 cursor-pointer hover:bg-blue-400 hover:text-white"
+              className={`gap-2 cursor-pointer hover:bg-blue-400 hover:text-white ${
+                showFilter ? "bg-blue-400 text-white" : ""
+              }`}
               onClick={() => {
                 setShowFilter(!showFilter);
                 setShowExport(false);
@@ -646,138 +667,16 @@ export default function CountryDataTable({
             </Button>
 
             {/* Columns visibility dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 cursor-pointer hover:bg-blue-400 hover:text-white"
-                >
-                  Visibility
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-72 h-[200px] flex flex-col p-0 overflow-hidden"
-              >
-                {/* Fixed Top Section */}
-                <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 border-b px-3 py-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2 flex-1">
-                      <Checkbox
-                        id="select-all-columns"
-                        checked={allColumnsVisible}
-                        onCheckedChange={(checked) => {
-                          table
-                            .getAllColumns()
-                            .filter(
-                              (col) =>
-                                col.getCanHide() &&
-                                col.id !== "select" &&
-                                col.id !== "actions"
-                            )
-                            .forEach((col) => col.toggleVisibility(!!checked));
-                          setAllColumnsVisible(!!checked);
-                        }}
-                      />
-                      <div className="relative flex-1">
-                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                        <Input
-                          placeholder="Search columns..."
-                          className="pl-8 h-8 w-full"
-                          value={columnSearch}
-                          onChange={(e) => setColumnSearch(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 ml-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setColumnSearch("");
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Scrollable Middle Section */}
-                <div className="flex-1 overflow-y-auto px-1 py-1">
-                  {table
-                    .getAllColumns()
-                    .filter(
-                      (column) =>
-                        column.getCanHide() &&
-                        column.id !== "select" &&
-                        column.id !== "actions" &&
-                        (!columnSearch ||
-                          column.id
-                            .toLowerCase()
-                            .includes(columnSearch.toLowerCase()))
-                    )
-                    .map((column) => (
-                      <DropdownMenuCheckboxItem
-                        key={column.id}
-                        checked={column.getIsVisible()}
-                        onCheckedChange={(value) => {
-                          column.toggleVisibility(!!value);
-                          // Update select all state
-                          const visibleColumns = table
-                            .getAllColumns()
-                            .filter(
-                              (col) =>
-                                col.getCanHide() &&
-                                col.id !== "select" &&
-                                col.id !== "actions"
-                            )
-                            .filter((col) => col.getIsVisible());
-                          setAllColumnsVisible(
-                            visibleColumns.length ===
-                              table
-                                .getAllColumns()
-                                .filter(
-                                  (col) =>
-                                    col.getCanHide() &&
-                                    col.id !== "select" &&
-                                    col.id !== "actions"
-                                ).length
-                          );
-                        }}
-                        // className="px-3 py-1.5" // Added padding for better touch targets
-                      >
-                        {column.id}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                </div>
-
-                {/* Fixed Bottom Section */}
-                <div className="sticky bottom-0 bg-white dark:bg-gray-900 z-10 border-t px-3 py-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-center text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-gray-800"
-                    onClick={() => {
-                      table
-                        .getAllColumns()
-                        .filter(
-                          (col) =>
-                            col.getCanHide() &&
-                            col.id !== "select" &&
-                            col.id !== "actions"
-                        )
-                        .forEach((col) => col.toggleVisibility(true));
-                      setAllColumnsVisible(true);
-                      setColumnSearch("");
-                    }}
-                  >
-                    Reset All
-                  </Button>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              variant="outline"
+              size="sm"
+              className={`gap-2 cursor-pointer hover:bg-blue-400 hover:text-white ${
+                showVisibility ? "bg-blue-400 text-white" : ""
+              }`}
+              onClick={() => setShowVisibility(true)}
+            >
+              Visibility
+            </Button>
           </div>
         </div>
       </div>
@@ -848,6 +747,16 @@ export default function CountryDataTable({
                       </tr>
                     ))}
                   </tbody>
+                  <tfoot>
+                    <tr>
+                      <td
+                        colSpan={table.getAllColumns().length}
+                        className="sticky bottom-0 bg-white dark:bg-gray-900 pt-2 border-t"
+                      >
+                        <PaginationControls table={table} />
+                      </td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             </div>
@@ -868,11 +777,19 @@ export default function CountryDataTable({
             <FilterComponent table={table} setShowFilter={setShowFilter} />
           </div>
         )}
+        {showVisibility && (
+          <div className="w-72 flex-shrink-0 border-l bg-white dark:bg-gray-800">
+            <ColumnVisibilityPanel
+              table={table}
+              setShowVisibility={setShowVisibility}
+            />
+          </div>
+        )}
       </div>
 
-      <div className="sticky bottom-0 bg-white dark:bg-gray-900 pt-2 border-t">
+      {/* <div className="sticky bottom-0 bg-white dark:bg-gray-900 pt-2 border-t">
         <PaginationControls table={table} />
-      </div>
+      </div> */}
     </div>
   );
 }

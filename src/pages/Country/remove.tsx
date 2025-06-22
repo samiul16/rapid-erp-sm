@@ -47,8 +47,8 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import ImportModal from "./ImportModal";
-import { ExportComponent } from "./ExportComponent";
-import FilterComponent from "./FilterComponent";
+import { ExportComponent } from "./ListExportComponent";
+import FilterComponent from "./ListFilterComponent";
 
 type Country = {
   id: string;

@@ -12,15 +12,13 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import GridFilterComponent from "./GridFilterComponent";
+import GridExportComponent from "./GridExportComponent";
+import { Modal } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import ImportStepper from "@/components/common/ImportStepper";
 
 // Mock data - replace with real data from your API
 const countries = [
@@ -48,6 +46,12 @@ export default function CountriesGrid({
   const [, setIsShowResetButton] = useState(false);
   const [countriesData, setCountriesData] = useState(countries);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [opened, { open, close }] = useDisclosure(false);
+  const [modalData, setModalData] = useState({
+    title: "Import Country",
+    message: <ImportStepper />,
+  });
 
   const handleDeleteClick = (countryId: string) => {
     setCountryToDelete(countryId);
@@ -79,7 +83,7 @@ export default function CountriesGrid({
   return (
     <div className="px-4 py-3 h-full flex flex-col bg-white dark:bg-gray-900">
       {/* Fixed header controls */}
-      <div className="sticky top-0 z-50 bg-white dark:bg-gray-900 pt-4 pb-4 border-b">
+      <div className="sticky top-0 z-50 bg-white dark:bg-gray-900 pb-2">
         <div className="grid grid-cols-12 gap-4 items-center">
           {/* Left buttons */}
           <div className="col-span-4 flex items-center gap-2">
@@ -91,7 +95,18 @@ export default function CountriesGrid({
               <List className="h-4 w-4" />
               <span className="hidden sm:inline">List</span>
             </Button>
-            <Button variant="outline" className="gap-2 cursor-pointer">
+            <Button
+              variant="outline"
+              className="gap-2 cursor-pointer"
+              onClick={() => {
+                console.log("Import Country Modal open");
+                open();
+                setModalData({
+                  title: "Import Country",
+                  message: <ImportStepper />,
+                });
+              }}
+            >
               <Import className="h-4 w-4" />
               <span className="hidden sm:inline">{t("common.import")}</span>
             </Button>
@@ -121,27 +136,29 @@ export default function CountriesGrid({
 
           {/* Right buttons */}
           <div className="col-span-4 flex items-center justify-end gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="gap-2 cursor-pointer hover:bg-blue-400 hover:text-white"
-                >
-                  <Download className="h-4 w-4" />
-                  <span className="hidden sm:inline">{t("common.export")}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              variant="outline"
+              className={`gap-2 cursor-pointer hover:bg-blue-400 hover:text-white ${
+                isExportOpen ? "bg-blue-400 text-white" : ""
+              }`}
+              onClick={() => {
+                setIsExportOpen(!isExportOpen);
+                setIsFilterOpen(false);
+              }}
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">{t("common.export")}</span>
+            </Button>
 
             <Button
               variant="outline"
-              className="gap-2 cursor-pointer hover:bg-blue-400 hover:text-white"
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className={`gap-2 cursor-pointer hover:bg-blue-400 hover:text-white ${
+                isFilterOpen ? "bg-blue-400 text-white" : ""
+              }`}
+              onClick={() => {
+                setIsFilterOpen(!isFilterOpen);
+                setIsExportOpen(false);
+              }}
             >
               <Filter className="h-4 w-4" />
               <span className="hidden sm:inline">{t("common.filters")}</span>
@@ -241,7 +258,35 @@ export default function CountriesGrid({
             />
           )}
         </div>
+
+        {/* Export component - 25% width */}
+        <div
+          className={`${
+            isExportOpen ? "w-1/5" : "w-0"
+          } pl-4 border-l dark:border-gray-700`}
+        >
+          {isExportOpen && (
+            <GridExportComponent
+              data={countries}
+              setFilteredData={setCountriesData}
+              setIsExportOpen={setIsExportOpen}
+            />
+          )}
+        </div>
       </div>
+
+      <Modal
+        opened={opened}
+        onClose={close}
+        title="Import Country"
+        size="xl"
+        overlayProps={{
+          backgroundOpacity: 0.55,
+          blur: 3,
+        }}
+      >
+        <div className="pt-5 pb-14 px-5">{modalData.message}</div>
+      </Modal>
     </div>
   );
 }
