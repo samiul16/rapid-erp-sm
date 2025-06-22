@@ -29,10 +29,10 @@ const YoutubeButton = ({ videoId, youtubeOptions }: YoutubeButtonProps) => {
       <Button
         variant="outline"
         size="icon"
-        className="h-9 w-9 sm:w-12 hover:bg-red-100 bg-red-500 border-red-600"
+        className="h-7 w-7 sm:w-12 hover:bg-blue-700 bg-blue-400 border-blue-700"
         onClick={() => setOpen(true)}
       >
-        <PlayIcon className="size-4 sm:size-5 md:size-6 text-white" />
+        <PlayIcon className="size-4 text-white" />
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[1000px]">

@@ -10,7 +10,7 @@ const Footer = () => {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   return (
-    <footer className="mt-4 border-t border-gray-200 dark:border-gray-700 py-4 px-6">
+    <footer className="border-t border-gray-200 dark:border-gray-700 py-4 px-6 bg-gray-100 dark:bg-gray-800">
       <div className="flex flex-col md:flex-row items-center justify-between max-w-7xl mx-auto">
         {/* Left Section - Powered by */}
         <div className="mb-2 md:mb-0">
@@ -28,7 +28,7 @@ const Footer = () => {
                 onClick={() => setIsHelpOpen(!isHelpOpen)}
               >
                 <HelpCircle className="w-4 h-4 mr-1" />
-                Need help? Click here
+                Need help?
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-64 p-4 text-sm">

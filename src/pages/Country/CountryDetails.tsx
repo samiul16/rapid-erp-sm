@@ -1,25 +1,16 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  ArrowLeft,
-  Edit,
-  FileText,
-  Printer,
-  Plus,
-  Save,
-  Star,
-  Trash2,
-} from "lucide-react";
+import { Edit, FileText, Printer, History, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Toggle } from "@/components/ui/toggle";
-import { Badge } from "@/components/ui/badge";
 import YoutubeButton from "@/components/common/YoutubeButton";
+import { Switch } from "@/components/ui/switch";
+import { useNavigate } from "react-router-dom";
 
 export default function CountryDetailsPage() {
   const { t } = useTranslation();
   const [keepChanges, setKeepChanges] = useState(false);
+  const navigate = useNavigate();
 
-  // Mock data - replace with real data from your API
   const countryData = {
     code: "US",
     title: "United States",
@@ -35,29 +26,10 @@ export default function CountryDetailsPage() {
     deletedAt: null,
   };
 
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex">
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={`h-4 w-4 ${
-              i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-            }`}
-          />
-        ))}
-      </div>
-    );
-  };
-
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return "N/A";
+    if (!dateString) return "--/--/----";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    return date.toLocaleDateString("en-GB");
   };
 
   const handlePrint = () => {
@@ -69,135 +41,181 @@ export default function CountryDetailsPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      {/* Header with back and action buttons */}
+    <div className="container mx-auto px-4 py-6 flex flex-col min-h-screen dark:bg-gray-900">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <Button variant="outline" size="sm" className="gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          {t("button.back")}
-        </Button>
-        <div className="flex gap-2 w-full sm:w-auto justify-end">
+        <div className="flex items-center gap-4">
           <YoutubeButton videoId="PcVAyB3nDD4" />
-          <Button variant="outline" className="gap-2">
+          <h1 className="text-2xl font-bold text-blue-400">
+            {t("button.viewingCountry")}
+          </h1>
+        </div>
+        <div className="flex gap-2 w-full sm:w-auto justify-end">
+          <Button
+            variant="outline"
+            className="gap-2 hover:bg-blue-600 hover:text-white cursor-pointer"
+            onClick={() => navigate("/countries/1/edit")}
+          >
             <Edit className="h-4 w-4" />
             {t("button.edit")}
           </Button>
-          <Button className="bg-white hover:bg-white text-black border border-black">
-            <Plus className="h-4 w-4" />
-            {t("button.create")}
-          </Button>
         </div>
       </div>
 
-      {/* Main content - Titles remain in English as requested */}
-      <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Left column - Flag and basic info */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-14 border rounded-md overflow-hidden bg-gray-100">
+      {/* Main content */}
+      <div className="flex-1">
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6 dark:bg-gray-800 dark:border-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {/* Flag */}
+            <div>
+              <h3 className="font-medium mb-1">Flag</h3>
+              <div className="w-16 h-12 border rounded-md bg-gray-100 overflow-hidden">
                 <img
                   src={countryData.flag}
-                  alt={`${countryData.title} flag`}
+                  alt="Flag"
                   className="object-cover w-full h-full"
                 />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold">{countryData.title}</h1>
-                <p className="text-gray-500">{countryData.code}</p>
-              </div>
             </div>
 
-            <div className="space-y-2">
-              <h3 className="font-medium">Rating</h3>
+            {/* Code and Title */}
+            <div>
+              <h3 className="font-medium mb-1">Code</h3>
+              <input
+                type="text"
+                value={countryData.code}
+                readOnly
+                className="border rounded px-3 py-1.5 w-full"
+              />
+            </div>
+
+            <div>
+              <h3 className="font-medium mb-1">Country</h3>
+              <p className="text-gray-700 dark:text-gray-200">
+                {countryData.title}
+              </p>
+            </div>
+
+            {/* <div>
+              <h3 className="font-medium mb-1">Rating</h3>
               {renderStars(countryData.rating)}
-            </div>
+            </div> */}
 
-            <div className="space-y-2">
-              <h3 className="font-medium">Status</h3>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant={countryData.isDefault ? "default" : "outline"}>
-                  {countryData.isDefault ? "Default" : "Not Default"}
-                </Badge>
-                <Badge variant={countryData.isActive ? "default" : "outline"}>
-                  {countryData.isActive ? "Active" : "Inactive"}
-                </Badge>
-                <Badge variant={countryData.isDraft ? "default" : "outline"}>
-                  {countryData.isDraft ? "Draft" : "Not Draft"}
-                </Badge>
-                <Badge
-                  variant={countryData.isDeleted ? "destructive" : "outline"}
-                >
-                  {countryData.isDeleted ? "Deleted" : "Not Deleted"}
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          {/* Middle column - Dates */}
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <h2 className="font-semibold text-lg">Timestamps</h2>
-              <div className="grid grid-cols-1 gap-4">
+            {/* Toggles in one line */}
+            <div className="col-span-full grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+              <div className="flex items-center gap-3">
                 <div>
-                  <h3 className="text-sm text-gray-500">Created</h3>
-                  <p>{formatDate(countryData.createdAt)}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm text-gray-500">Updated</h3>
-                  <p>{formatDate(countryData.updatedAt)}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm text-gray-500">Drafted</h3>
-                  <p>{formatDate(countryData.draftedAt)}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm text-gray-500">Deleted</h3>
-                  <p>{formatDate(countryData.deletedAt)}</p>
+                  <h3 className="font-medium mb-1">Active</h3>
+                  <Switch
+                    checked={countryData.isActive}
+                    disabled
+                    className="data-[state=checked]:bg-blue-400"
+                  />
                 </div>
               </div>
+              <div className="flex items-center gap-3">
+                <div>
+                  <h3 className="font-medium mb-1">Draft</h3>
+                  <Switch
+                    checked={countryData.isDraft}
+                    disabled
+                    className="data-[state=checked]:bg-blue-400"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div>
+                  <h3 className="font-medium mb-1">Delete</h3>
+                  <Switch
+                    checked={countryData.isDeleted}
+                    disabled
+                    className="data-[state=checked]:bg-blue-400"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div>
+                  <h3 className="font-medium mb-1">Default</h3>
+                  <Switch
+                    checked={countryData.isDefault}
+                    disabled
+                    className="data-[state=checked]:bg-blue-400"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Dates */}
+            <div>
+              <h3 className="font-medium mb-1">Created</h3>
+              <p>{formatDate(countryData.createdAt)}</p>
+            </div>
+
+            <div>
+              <h3 className="font-medium mb-1">Updated</h3>
+              <p>{formatDate(countryData.updatedAt)}</p>
+            </div>
+
+            <div>
+              <h3 className="font-medium mb-1">Drafted</h3>
+              <p>{formatDate(countryData.draftedAt)}</p>
+            </div>
+
+            <div>
+              <h3 className="font-medium mb-1">Deleted</h3>
+              <p>{formatDate(countryData.deletedAt)}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Footer with actions */}
-      <div className="sticky bottom-0 bg-white border-t py-4 px-6 shadow-sm mt-6">
+      {/* Footer */}
+      <div className="sticky bottom-0 bg-white border py-4 px-6 shadow-sm dark:bg-gray-800 dark:border-gray-700">
         <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <Toggle
-              pressed={keepChanges}
-              onPressedChange={setKeepChanges}
+            <Switch
+              checked={keepChanges}
+              className="data-[state=checked]:bg-blue-400"
+              onCheckedChange={setKeepChanges}
+              aria-label={t("button.keepChanges")}
+            />
+            <span>{t("button.keepChanges")}</span>
+
+            <Button
               variant="outline"
-              aria-label="Keep changes"
-              className="gap-2"
+              size="sm"
+              className="gap-2 cursor-pointer text-white bg-blue-400 hover:bg-blue-600 hover:text-white"
+              onClick={handleExportPDF}
             >
-              <Save className="h-4 w-4" />
-              {t("button.keepChanges")}
-            </Toggle>
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">PDF</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 cursor-pointer text-white bg-blue-400 hover:bg-blue-600 hover:text-white"
+              onClick={handlePrint}
+            >
+              <Printer className="h-4 w-4" />
+              <span className="hidden sm:inline">Print</span>
+            </Button>
           </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
-              className="gap-2"
-              onClick={handleExportPDF}
+              className="gap-2 cursor-pointer text-white bg-blue-400 hover:bg-blue-600 hover:text-white"
             >
-              <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("button.exportPDF")}</span>
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Export</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="gap-2"
-              onClick={handlePrint}
+              className="gap-2 cursor-pointer text-white bg-blue-400 hover:bg-blue-600 hover:text-white"
             >
-              <Printer className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("button.print")}</span>
-            </Button>
-            <Button variant="destructive" size="sm" className="gap-2">
-              <Trash2 className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("button.delete")}</span>
+              <History className="h-4 w-4" />
+              <span className="hidden sm:inline">History</span>
             </Button>
           </div>
         </div>

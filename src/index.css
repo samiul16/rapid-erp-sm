@@ -119,6 +119,52 @@ button[data-variant="ghost"][data-size="icon"] > svg {
   height: 2rem !important;
 }
 
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+  margin: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+/* index.css or styles.css */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.3); /* Light gray thumb */
+  border-radius: 9999px; /* Fully rounded */
+  border: 2px solid transparent; /* Creates spacing */
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.5); /* Darker on hover */
+}
+
+::-webkit-scrollbar-button {
+  display: none; /* Removes up/down arrow buttons */
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

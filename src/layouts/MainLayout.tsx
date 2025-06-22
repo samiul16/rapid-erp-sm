@@ -5,17 +5,29 @@ import Footer from "../components/layout/Footer";
 
 const MainLayout = () => {
   return (
-    <div className="flex h-screen flex-col">
-      <Navbar />
+    <div className="flex flex-col h-screen overflow-hidden">
+      {/* Navbar with fixed height */}
+      <div className="flex-shrink-0">
+        <Navbar />
+      </div>
+
+      {/* Main content area */}
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
-        <div className="flex flex-col flex-1">
-          {/* Outlet with fixed height (100vh - navbar - footer) */}
-          <div className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900">
+        {/* Sidebar with fixed width */}
+        <div className="flex-shrink-0">
+          <Sidebar />
+        </div>
+
+        {/* Content area with precise height calculation */}
+        <div className="flex flex-col flex-1 min-h-0 dark:bg-gray-900 max-w-[calc(100%-100px)]">
+          {" "}
+          {/* min-h-0 prevents growing beyond parent */}
+          {/* Outlet with exact remaining height (after navbar and footer) */}
+          <div className="flex-1 overflow-hidden pl-5">
             <Outlet />
           </div>
-          {/* Footer always at bottom */}
-          <div className="flex-shrink-0 bg-gray-50 dark:bg-gray-900">
+          {/* Footer with fixed height */}
+          <div className="flex-shrink-0">
             <Footer />
           </div>
         </div>

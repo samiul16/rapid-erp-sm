@@ -1,21 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  ArrowLeft,
-  FileText,
-  Printer,
-  Save,
-  Trash2,
-  Upload,
-  X,
-} from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { StarRating } from "@/components/ui/star-rating";
 import YoutubeButton from "@/components/common/YoutubeButton";
+import EditableInput from "@/components/common/EditableInput";
 
 type CountryData = {
   code: string;
@@ -27,6 +17,7 @@ type CountryData = {
   flag: string | null;
   createdAt: string;
   updatedAt: string;
+  callingCode: string;
 };
 
 type Props = {
@@ -43,12 +34,15 @@ const initialData: CountryData = {
   flag: null,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
+  callingCode: "+971",
 };
 
 export default function CountryFormPage({ isEdit = false }: Props) {
   const { t, i18n } = useTranslation();
   const [keepCreating, setKeepCreating] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   // Form state
@@ -62,6 +56,7 @@ export default function CountryFormPage({ isEdit = false }: Props) {
     flag: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    callingCode: "",
   });
 
   // Initialize with edit data if available
@@ -77,17 +72,53 @@ export default function CountryFormPage({ isEdit = false }: Props) {
     }
   }, [isEdit, initialData]);
 
-  // Handle image upload
-  const handleImageChange = () => {
-    // const file = e.target.files?.[0];
-    // if (file) {
-    //   setFormData({ ...formData, flag: URL.createObjectURL(file) });
+  // Handle drag events
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleImageFile();
+    }
+  };
+
+  // Handle image file selection
+  const handleImageFile = () => {
+    // if (file.type.match('image.*')) {
     //   const reader = new FileReader();
-    //   reader.onloadend = () => {
-    //     setImagePreview(reader.result as string);
+    //   reader.onload = (e) => {
+    //     setImagePreview(e.target?.result as string);
+    //     setFormData({ ...formData, flag: e.target?.result as string });
     //   };
     //   reader.readAsDataURL(file);
     // }
+  };
+
+  // Handle image upload via file input
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleImageFile();
+    }
   };
 
   // Handle form field changes
@@ -100,9 +131,9 @@ export default function CountryFormPage({ isEdit = false }: Props) {
   };
 
   // Handle rating change
-  const handleRatingChange = (rating: number) => {
-    setFormData({ ...formData, rating });
-  };
+  //   const handleRatingChange = (rating: number) => {
+  //     setFormData({ ...formData, rating });
+  //   };
 
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
@@ -123,6 +154,7 @@ export default function CountryFormPage({ isEdit = false }: Props) {
         flag: null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        callingCode: "",
       });
       setImagePreview(null);
       if (formRef.current) {
@@ -131,280 +163,282 @@ export default function CountryFormPage({ isEdit = false }: Props) {
     }
   };
 
-  // Arabic translations for footer buttons
-  const footerButtons = {
-    keepCreating:
-      i18n.language === "ar" ? "الاستمرار في الإنشاء" : "Keep Creating",
-    print: i18n.language === "ar" ? "طباعة" : "Print",
-    pdf: i18n.language === "ar" ? "PDF" : "PDF",
-    reset: i18n.language === "ar" ? "إعادة تعيين" : "Reset",
-    submit: i18n.language === "ar" ? "إرسال" : "Submit",
+  // Trigger file input click
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   return (
-    <div
-      className="container mx-auto px-4 py-6"
-      dir={i18n.language === "ar" ? "rtl" : "ltr"}
-    >
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <Button variant="outline" size="sm" className="gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          {t("button.back")}
-        </Button>
-
-        <div className="flex gap-2 items-center">
-          <YoutubeButton videoId="your-video-id" />
-          <h1 className="text-xl font-bold">
-            {isEdit ? t("form.editCountry") : t("form.createCountry")}
-          </h1>
-        </div>
-      </div>
-
-      {/* Main Form */}
-      <form
-        ref={formRef}
-        onSubmit={handleSubmit}
-        className="bg-white rounded-lg shadow-sm border p-6 mb-6"
+    <div className="flex flex-col min-h-screen">
+      <div
+        className="container mx-auto px-4 py-6 flex-grow"
+        dir={i18n.language === "ar" ? "rtl" : "ltr"}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Left Column - Basic Info */}
-          <div className="space-y-6">
-            {/* Country Code */}
-            <div className="space-y-2">
+        {/* Header */}
+        <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-4 mb-8">
+          <div className="flex gap-2 items-center">
+            <YoutubeButton videoId="your-video-id" />
+            <h1 className="text-xl font-bold text-blue-400">
+              {isEdit ? t("form.editingCountry") : t("form.creatingCountry")}
+            </h1>
+          </div>
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 bg-blue-400 hover:bg-blue-600 text-white cursor-pointer"
+            >
+              {t("button.list")}
+            </Button>
+          </div>
+        </div>
+
+        {/* Main Form */}
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          className="bg-white rounded-lg shadow-sm border p-6 mb-6 dark:bg-gray-800 dark:border-gray-700"
+        >
+          {/* First Row: Code, Country, Default */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 items-end">
+            {/* Country Code - 3 columns */}
+            <div className="md:col-span-3 space-y-2">
               <Label htmlFor="code">{t("form.countryCode")}</Label>
-              <Input
+              <EditableInput
                 id="code"
                 name="code"
                 value={formData.code}
                 onChange={handleChange}
-                required
-                maxLength={3}
-                className="w-full"
+                onNext={() => {
+                  // Focus next input (title)
+                  document.getElementById("title")?.focus();
+                }}
+                onCancel={() => {
+                  setFormData({ ...formData, code: "" });
+                }}
                 placeholder="US"
+                maxLength={3}
+                required
               />
             </div>
-
-            {/* Country Name */}
-            <div className="space-y-2">
+            <div className="md:col-span-3 flex items-center gap-4">
+              <div className="md:col-span-3 space-y-2">
+                <Label htmlFor="callingCode">{t("form.callingCode")}</Label>
+                <EditableInput
+                  id="callingCode"
+                  name="callingCode"
+                  value={formData.callingCode}
+                  onChange={handleChange}
+                  onNext={() => {
+                    // Focus next input (title)
+                    document.getElementById("title")?.focus();
+                  }}
+                  onCancel={() => {
+                    setFormData({ ...formData, code: "" });
+                  }}
+                  placeholder="US"
+                  maxLength={3}
+                  required
+                />
+              </div>
+            </div>
+            {/* Country Name - 6 columns */}
+            <div className="md:col-span-6 space-y-2">
               <Label htmlFor="title">{t("form.countryName")}</Label>
-              <Input
+              <EditableInput
                 id="title"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                required
-                className="w-full"
+                onNext={() => {
+                  // Focus next element (you can decide what's next)
+                  document.getElementById("isActive")?.focus();
+                }}
+                onCancel={() => {
+                  setFormData({ ...formData, title: "" });
+                }}
                 placeholder={t("form.countryNamePlaceholder")}
+                required
+              />
+            </div>
+          </div>
+
+          {/* Second Row: Active, Draft, Delete, Rating */}
+          {/* Second Row: Active, Draft, Delete, Default - All in one line */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 items-center">
+            {/* Active Switch - 3 columns */}
+            <div className="md:col-span-3 flex items-center gap-4">
+              <Label htmlFor="isActive" className="whitespace-nowrap">
+                {t("common.active")}
+              </Label>
+              <Switch
+                id="isActive"
+                name="isActive"
+                className="data-[state=checked]:bg-blue-400"
+                checked={formData.isActive}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, isActive: checked })
+                }
               />
             </div>
 
-            {/* Rating - Moved up from right column */}
-            <div className="flex items-start space-y-4">
-              <Label>{t("form.rating")} :</Label>
-              <StarRating
-                rating={formData.rating}
-                onRatingChange={handleRatingChange}
-                editable={true}
+            {/* Draft Switch - 3 columns */}
+            <div className="md:col-span-3 flex items-center gap-4">
+              <Label htmlFor="isDraft" className="whitespace-nowrap">
+                {t("common.draft")}
+              </Label>
+              <Switch
+                id="isDraft"
+                name="isDraft"
+                className="data-[state=checked]:bg-blue-400"
+                checked={formData.isDraft}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, isDraft: checked })
+                }
               />
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="flex items-start space-x-4">
-                <Label htmlFor="isDefault">{t("common.default")}</Label>
-                <Switch
-                  id="isDefault"
-                  name="isDefault"
-                  checked={formData.isDefault}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDefault: checked })
-                  }
-                />
-              </div>
-              <div className="flex items-start space-x-4">
-                <Label htmlFor="isActive">{t("common.active")}</Label>
-                <Switch
-                  id="isActive"
-                  name="isActive"
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isActive: checked })
-                  }
-                />
-              </div>
-              <div className="flex items-start space-x-4">
-                <Label htmlFor="isDraft">{t("common.draft")}</Label>
-                <Switch
-                  id="isDraft"
-                  name="isDraft"
-                  checked={formData.isDraft}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDraft: checked })
-                  }
-                />
-              </div>
+
+            {/* Delete Button - 3 columns (only in edit mode) */}
+            <div className="md:col-span-3 flex items-center gap-4">
+              <Label htmlFor="isDeleted" className="whitespace-nowrap">
+                {t("button.delete")}
+              </Label>
+              <Switch
+                id="isDeleted"
+                name="isDeleted"
+                className="data-[state=checked]:bg-blue-400"
+                onCheckedChange={() => setFormData({ ...formData })}
+              />
+            </div>
+
+            {/* Default Switch - 3 columns */}
+            <div className="md:col-span-3 flex items-center gap-4">
+              <Label htmlFor="isDefault" className="whitespace-nowrap">
+                {t("common.default")}
+              </Label>
+              <Switch
+                id="isDefault"
+                name="isDefault"
+                className="data-[state=checked]:bg-blue-400"
+                checked={formData.isDefault}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, isDefault: checked })
+                }
+              />
             </div>
           </div>
 
-          {/* Right Column - Image and Status Switches */}
-          <div className="space-y-6">
-            {/* Flag Image Upload */}
-            <div className="space-y-4">
-              <Label>{t("form.countryFlag")}</Label>
-              <div className="flex flex-col items-center gap-4">
-                {imagePreview ? (
-                  <div className="relative">
-                    <img
-                      src={imagePreview}
-                      alt={t("form.flagPreview")}
-                      className="w-40 h-28 object-contain border rounded-md"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                      onClick={() => {
-                        setImagePreview(null);
-                        setFormData({ ...formData, flag: null });
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="w-40 h-28 border-2 border-dashed rounded-md flex items-center justify-center bg-gray-50">
-                    <Upload className="h-8 w-8 text-gray-400" />
-                  </div>
-                )}
-                <Input
-                  id="flag"
-                  name="flag"
-                  type="file"
-                  onChange={handleImageChange}
-                  accept="image/*"
-                  className="hidden"
-                />
-                <Label
-                  htmlFor="flag"
-                  className="cursor-pointer px-4 py-2 border rounded-md hover:bg-gray-50"
-                >
-                  {imagePreview ? t("form.changeImage") : t("form.uploadImage")}
-                </Label>
-              </div>
+          {/* Third Row: Flag Image Upload with Drag and Drop - Full width */}
+          <div className="grid grid-cols-1 gap-4">
+            <Label>{t("form.countryFlag")}</Label>
+            <div
+              className={`border-2 border-dashed rounded-lg p-6 text-center ${
+                isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
+              }`}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              onClick={triggerFileInput}
+            >
+              {imagePreview ? (
+                <div className="relative inline-block">
+                  <img
+                    src={imagePreview}
+                    alt={t("form.flagPreview")}
+                    className="w-40 h-28 object-contain rounded-md"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white shadow-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setImagePreview(null);
+                      setFormData({ ...formData, flag: null });
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-2">
+                  <Upload className="h-8 w-8 text-gray-400" />
+                  <p className="text-sm text-gray-500">
+                    {t("form.dragDropImage")}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {t("form.orClickToSelect")}
+                  </p>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                id="flag"
+                name="flag"
+                type="file"
+                onChange={handleImageChange}
+                accept="image/*"
+                className="hidden"
+              />
             </div>
           </div>
-        </div>
-        <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center pt-16 gap-4">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="keepCreating"
-              checked={keepCreating}
-              onCheckedChange={(checked) => setKeepCreating(!!checked)}
-            />
-            <Label htmlFor="keepCreating" className="cursor-pointer">
-              {footerButtons.keepCreating}
-            </Label>
-          </div>
+        </form>
+      </div>
 
-          <div className="flex flex-wrap gap-2 justify-center sm:justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              onClick={() => window.print()}
-              type="button"
-            >
-              <Printer className="h-4 w-4" />
-              {footerButtons.print}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              onClick={() => console.log("Export PDF")}
-              type="button"
-            >
-              <FileText className="h-4 w-4" />
-              {footerButtons.pdf}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              onClick={handleReset}
-              type="button"
-            >
-              <Trash2 className="h-4 w-4" />
-              {footerButtons.reset}
-            </Button>
-            <Button
-              type="submit"
-              size="sm"
-              className="gap-2"
-              onClick={() => formRef.current?.requestSubmit()}
-            >
-              <Save className="h-4 w-4" />
-              {footerButtons.submit}
-            </Button>
-          </div>
-        </div>
-      </form>
-
-      {/* Footer Actions */}
-      {/* <div className="sticky bottom-0 bg-white border-t py-4 px-6 shadow-sm">
+      {/* Footer */}
+      <div className="sticky bottom-0 bg-white border mx-4 py-4 px-6 shadow-sm dark:bg-gray-800 dark:border-gray-700">
         <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="keepCreating"
-              checked={keepCreating}
-              onCheckedChange={(checked) => setKeepCreating(!!checked)}
-            />
-            <Label htmlFor="keepCreating" className="cursor-pointer">
-              {footerButtons.keepCreating}
-            </Label>
+          {/* Left side - 8 columns */}
+          <div className="md:col-span-8 flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="keepCreating"
+                checked={keepCreating}
+                className="data-[state=checked]:bg-blue-400"
+                onCheckedChange={(checked) => setKeepCreating(!!checked)}
+              />
+              <Label
+                htmlFor="keepCreating"
+                className="cursor-pointer whitespace-nowrap"
+              >
+                {isEdit ? t("button.keep") : t("button.keep")}
+              </Label>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Switch id="print" className="data-[state=checked]:bg-blue-400" />
+              <Label
+                htmlFor="print"
+                className="cursor-pointer whitespace-nowrap"
+              >
+                {t("button.print")}
+              </Label>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Switch id="pdf" className="data-[state=checked]:bg-blue-400" />
+              <Label htmlFor="pdf" className="cursor-pointer whitespace-nowrap">
+                {t("button.pdf")}
+              </Label>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2 justify-center sm:justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              onClick={() => window.print()}
-              type="button"
-            >
-              <Printer className="h-4 w-4" />
-              {footerButtons.print}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              onClick={() => console.log("Export PDF")}
-              type="button"
-            >
-              <FileText className="h-4 w-4" />
-              {footerButtons.pdf}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              onClick={handleReset}
-              type="button"
-            >
-              <Trash2 className="h-4 w-4" />
-              {footerButtons.reset}
+
+          {/* Right side - 4 columns */}
+          <div className="md:col-span-4 flex justify-end gap-4">
+            <Button variant="outline" onClick={handleReset} type="button">
+              {t("button.reset")}
             </Button>
             <Button
               type="submit"
-              size="sm"
-              className="gap-2"
+              className="bg-blue-400 hover:bg-blue-600 text-white"
               onClick={() => formRef.current?.requestSubmit()}
             >
-              <Save className="h-4 w-4" />
-              {footerButtons.submit}
+              {t("button.submit")}
             </Button>
           </div>
         </div>
-      </div> */}
+      </div>
     </div>
   );
 }

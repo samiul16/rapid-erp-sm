@@ -1,21 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useTheme } from "../../hooks/useTheme";
 import {
-  SunIcon,
-  MoonIcon,
   UserCircle,
   Search,
-  ArrowLeft,
   Maximize2,
   Bell,
   Heart,
+  ChevronRight,
 } from "lucide-react";
 import LanguageToggle from "../LanguageToggle";
 import clsx from "clsx";
 
 const Navbar = () => {
-  const { theme, toggleTheme } = useTheme();
   const { t, i18n } = useTranslation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -92,12 +88,12 @@ const Navbar = () => {
               <button
                 onClick={toggleSearch}
                 className={clsx(
-                  "p-2 text-gray-500 dark:text-gray-400",
+                  "p-2 text-gray-500 dark:text-gray-400 border-2 bg-blue-400 hover:bg-blue-600 hover:text-white cursor-pointer rounded-l-lg",
                   isRTL ? "order-last" : "order-first"
                 )}
                 aria-label={t("navbar.search.close")}
               >
-                <ArrowLeft size={18} />
+                <ChevronRight size={18} className="text-white" />
               </button>
               <input
                 ref={inputRef}
@@ -106,7 +102,7 @@ const Navbar = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={clsx(
-                  "w-full py-2 bg-transparent border-0 focus:ring-0 text-gray-700 dark:text-gray-300",
+                  "w-full py-1 bg-transparent border-0 focus:ring-0 text-gray-700 dark:text-gray-300",
                   isRTL ? "pr-2 text-right" : "pl-2 text-left"
                 )}
                 dir={i18n.language}
@@ -170,7 +166,7 @@ const Navbar = () => {
           </div>
 
           {/* Theme Toggle */}
-          <button
+          {/* <button
             onClick={toggleTheme}
             className="p-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
             aria-label={
@@ -180,7 +176,7 @@ const Navbar = () => {
             }
           >
             {theme === "dark" ? <SunIcon size={20} /> : <MoonIcon size={20} />}
-          </button>
+          </button> */}
 
           {/* User Profile */}
           <button

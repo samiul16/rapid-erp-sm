@@ -5,7 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import ForgotPassword from "./pages/ForgotPassword";
-import CountryPage from "./pages/Country/CountryPage";
+import CountryPage from "./pages/Country/CountriesPage";
 import CountryDetails from "./pages/Country/CountryDetails";
 import CountryFormPage from "./pages/Country/CreateEditPage";
 
