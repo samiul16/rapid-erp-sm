@@ -870,7 +870,7 @@ export default function CountryDataTable({
         )}
       </div>
 
-      <div className="sticky bottom-0 bg-white dark:bg-gray-900 pt-2 border-t">
+      <div className="sticky bottom-0 bg-white dark:bg-gray-900 pt-2 border-t max-w-[calc(100%-300px)]">
         <PaginationControls table={table} />
       </div>
     </div>

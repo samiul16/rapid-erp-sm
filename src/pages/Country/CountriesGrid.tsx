@@ -10,16 +10,6 @@ import {
   Search,
   RefreshCw,
 } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
@@ -30,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import GridFilterComponent from "./GridFilterComponent";
 
 // Mock data - replace with real data from your API
 const countries = [
@@ -52,28 +43,15 @@ export default function CountriesGrid({
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [countryToDelete, setCountryToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [, setIsShowResetButton] = useState(false);
   const [countriesData, setCountriesData] = useState(countries);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const handleDeleteClick = (countryId: string) => {
     setCountryToDelete(countryId);
-    // setIsDeleteDialogOpen(true);
     setIsShowResetButton(true);
-  };
-
-  const handleDeleteConfirm = () => {
-    // Add your delete logic here
-    console.log("Deleting country with ID:", countryToDelete);
-    setIsDeleteDialogOpen(false);
-    setCountryToDelete(null);
-  };
-
-  const handleDeleteCancel = () => {
-    setIsDeleteDialogOpen(false);
-    setCountryToDelete(null);
   };
 
   const handleViewModeChange = (viewMode: "grid" | "list") => {
@@ -99,12 +77,12 @@ export default function CountriesGrid({
   );
 
   return (
-    <div className="px-4 py-3 h-full flex flex-col">
+    <div className="px-4 py-3 h-full flex flex-col bg-white dark:bg-gray-900">
       {/* Fixed header controls */}
-      <div className="pb-1">
+      <div className="sticky top-0 z-50 bg-white dark:bg-gray-900 pt-4 pb-4 border-b">
         <div className="grid grid-cols-12 gap-4 items-center">
           {/* Left buttons */}
-          <div className="col-span-3 flex items-center gap-2">
+          <div className="col-span-4 flex items-center gap-2">
             <Button
               variant="outline"
               className="gap-2 cursor-pointer"
@@ -120,7 +98,7 @@ export default function CountriesGrid({
           </div>
 
           {/* Search */}
-          <div className="col-span-6 flex justify-center">
+          <div className="col-span-4 flex justify-center">
             <div className="w-full max-w-md">
               <div className="relative flex items-center rounded-full">
                 <Search className="absolute left-3 h-4 w-4 text-gray-400" />
@@ -142,27 +120,7 @@ export default function CountriesGrid({
           </div>
 
           {/* Right buttons */}
-          <div className="col-span-3 flex items-center justify-end gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="gap-2 cursor-pointer hover:bg-blue-400 hover:text-white"
-                >
-                  <Filter className="h-4 w-4" />
-                  <span className="hidden sm:inline">
-                    {t("common.filters")}
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Active Countries</DropdownMenuItem>
-                <DropdownMenuItem>Inactive Countries</DropdownMenuItem>
-                <DropdownMenuItem>Draft Countries</DropdownMenuItem>
-                <DropdownMenuItem>Clear Filters</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
+          <div className="col-span-4 flex items-center justify-end gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -179,111 +137,111 @@ export default function CountriesGrid({
                 <DropdownMenuItem>Export as PDF</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <Button
+              variant="outline"
+              className="gap-2 cursor-pointer hover:bg-blue-400 hover:text-white"
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+            >
+              <Filter className="h-4 w-4" />
+              <span className="hidden sm:inline">{t("common.filters")}</span>
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Scrollable card grid */}
-      <div className="flex-1 overflow-y-auto mt-2">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 pb-4">
-          {filteredCountries.map((country) => (
-            <Card
-              key={country.id}
-              className="transition-all hover:shadow-lg hover:border-gray-300 relative group dark:bg-gray-900 h-fit"
-            >
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div className="flex items-center space-x-2">
-                  <img
-                    src={`https://flagcdn.com/${country.code.toLowerCase()}.svg`}
-                    alt={`${country.name} flag`}
-                    className="h-6 w-8 object-cover border"
-                    onError={(e) => {
-                      (
-                        e.target as HTMLImageElement
-                      ).src = `https://flagcdn.com/us.svg`;
-                    }}
-                  />
-                  <CardTitle
-                    className="text-lg font-medium hover:text-blue-600 cursor-pointer"
-                    onClick={() => navigate(`/countries/${country.id}`)}
+      {/* Main content area */}
+      <div className="flex flex-1 overflow-hidden mt-2">
+        {/* Cards container - 75% width */}
+        <div
+          className={`${isFilterOpen ? "w-4/5" : "w-5/5"} pr-4 overflow-y-auto`}
+        >
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4">
+            {filteredCountries.map((country) => (
+              <Card
+                key={country.id}
+                className="transition-all hover:shadow-lg hover:border-gray-300 relative group dark:bg-gray-800"
+              >
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3">
+                  <div className="flex items-center space-x-2">
+                    <img
+                      src={`https://flagcdn.com/${country.code.toLowerCase()}.svg`}
+                      alt={`${country.name} flag`}
+                      className="h-5 w-7 object-cover border"
+                      onError={(e) => {
+                        (
+                          e.target as HTMLImageElement
+                        ).src = `https://flagcdn.com/us.svg`;
+                      }}
+                    />
+                    <CardTitle
+                      className="text-sm font-medium hover:text-blue-600 cursor-pointer"
+                      onClick={() => navigate(`/countries/${country.id}`)}
+                    >
+                      {country.name}
+                    </CardTitle>
+                  </div>
+                  <span
+                    className={`px-2 py-1 text-xs rounded-full cursor-pointer ${
+                      country.status === "active"
+                        ? "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200"
+                        : country.status === "inactive"
+                        ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200"
+                        : "bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200"
+                    }`}
+                    onClick={() => toggleStatus(country.id)}
                   >
-                    {country.name}
-                  </CardTitle>
-                </div>
-                <span
-                  className={`px-2 py-1 text-xs rounded-full cursor-pointer ${
-                    country.status === "active"
-                      ? "bg-green-100 text-green-800 hover:bg-green-200"
-                      : country.status === "inactive"
-                      ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                      : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                  }`}
-                  onClick={() => toggleStatus(country.id)}
-                >
-                  {country.status}
-                </span>
-              </CardHeader>
-              <CardContent>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm text-gray-500">
+                    {country.status}
+                  </span>
+                </CardHeader>
+                <CardContent className="p-3 pt-0">
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       Code: {country.code}
                     </p>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      {countryToDelete === country.id ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900 h-6 w-6 p-0"
+                          onClick={() => setCountryToDelete(null)}
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 h-6 w-6 p-0"
+                          onClick={() => handleDeleteClick(country.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    {countryToDelete === country.id ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
-                        onClick={() => setCountryToDelete(null)}
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => handleDeleteClick(country.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Filter component - 25% width */}
+        <div
+          className={`${
+            isFilterOpen ? "w-1/5" : "w-0"
+          } pl-4 border-l dark:border-gray-700`}
+        >
+          {isFilterOpen && (
+            <GridFilterComponent
+              data={countries}
+              setFilteredData={setCountriesData}
+              setShowFilter={setIsShowResetButton}
+            />
+          )}
         </div>
       </div>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              country and remove its data from our servers.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleDeleteCancel}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
-              onClick={handleDeleteConfirm}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
