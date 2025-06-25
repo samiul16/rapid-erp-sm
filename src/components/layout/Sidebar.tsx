@@ -19,6 +19,7 @@ import {
   Moon,
   Building2,
   Map,
+  DollarSign,
 } from "lucide-react";
 import clsx from "clsx";
 import { useTheme } from "@/hooks/useTheme";
@@ -75,6 +76,19 @@ const Sidebar = () => {
       label: t("sidebar.menu.cities"),
       path: "/cities",
     },
+    {
+      key: "areas",
+      icon: Map,
+      label: t("sidebar.menu.areas"),
+      path: "/areas",
+    },
+    {
+      key: "currencies",
+      icon: DollarSign,
+      label: t("sidebar.menu.currencies"),
+      path: "/currencies",
+    },
+
     {
       key: "pos",
       icon: ShoppingCart,

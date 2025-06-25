@@ -24,6 +24,9 @@ import StateDetails from "./pages/states/StateDetailsPage";
 import AreaDetails from "./pages/area/AreaDetailsPage";
 import AreaForm from "./pages/area/CreateEditPage";
 import AreasPage from "./pages/area/AreasPage";
+import CurrenciesPage from "./pages/currencies/CurrenciesPage";
+import CurrencyDetails from "./pages/currencies/CurrencyDetails";
+import CurrencyForm from "./pages/currencies/CreateEditPage";
 
 function App() {
   return (
@@ -96,6 +99,17 @@ function App() {
               <Route path="/areas/create" element={<AreaForm />} />
               <Route path="/areas/:id/edit" element={<AreaForm />} />
               {/* Add other pages here */}
+
+              <Route path="/currencies" element={<CurrenciesPage />} />
+              <Route path="/currencies/:id" element={<CurrencyDetails />} />
+              <Route
+                path="/currencies/create"
+                element={<CurrencyForm isEdit={false} />}
+              />
+              <Route
+                path="/currencies/:id/edit"
+                element={<CurrencyForm isEdit={true} />}
+              />
             </Route>
           </Route>
         </Routes>

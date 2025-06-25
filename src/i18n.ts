@@ -25,6 +25,8 @@ const resources = {
           userMaster: "User Master",
           cities: "Cities",
           states: "States",
+          areas: "Areas",
+          currencies: "Currencies",
         },
         search: {
           placeholder: "Search...",
@@ -184,6 +186,7 @@ const resources = {
           cities: "المدن",
           states: "الولايات",
           areas: "المناطق",
+          currencies: "العملات",
         },
         search: {
           placeholder: "ابحث...",
