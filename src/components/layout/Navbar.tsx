@@ -7,9 +7,14 @@ import {
   Bell,
   Heart,
   ChevronRight,
+  History,
+  Camera,
+  Mic,
 } from "lucide-react";
 import LanguageToggle from "../LanguageToggle";
 import clsx from "clsx";
+import { logout } from "@/store/authSlice";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const { t, i18n } = useTranslation();
@@ -19,6 +24,7 @@ const Navbar = () => {
   const [notificationCount] = useState(3); // Example count
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   const isRTL = i18n.language === "ar";
 
@@ -107,6 +113,30 @@ const Navbar = () => {
                 )}
                 dir={i18n.language}
               />
+              {/* Add voice and camera icons */}
+              <div
+                className={clsx(
+                  "flex items-center px-2 space-x-1",
+                  isRTL ? "order-first" : "order-last"
+                )}
+              >
+                <button
+                  type="button"
+                  className="p-1 text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400"
+                  aria-label={t("navbar.search.voice")}
+                  onClick={() => console.log("Voice search clicked")} // Add your voice search handler
+                >
+                  <Mic size={18} />
+                </button>
+                <button
+                  type="button"
+                  className="p-1 text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400"
+                  aria-label={t("navbar.search.camera")}
+                  onClick={() => console.log("Camera search clicked")} // Add your camera search handler
+                >
+                  <Camera size={18} />
+                </button>
+              </div>
             </>
           )}
         </div>
@@ -160,6 +190,17 @@ const Navbar = () => {
             <Heart size={20} />
           </button>
 
+          {/* Logout */}
+          <button
+            className="p-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            aria-label={t("navbar.recent")}
+            onClick={() => {
+              navigate("/recent");
+            }}
+          >
+            <History size={20} />
+          </button>
+
           {/* Language Toggle */}
           <div className="">
             <LanguageToggle />
@@ -182,6 +223,10 @@ const Navbar = () => {
           <button
             className="p-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
             aria-label={t("navbar.user")}
+            onClick={() => {
+              logout();
+              navigate("/login");
+            }}
           >
             <UserCircle size={20} />
           </button>

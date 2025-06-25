@@ -5,7 +5,7 @@ import { ChevronDown } from "lucide-react";
 interface EditableStatusCellProps {
   info: any;
   handleEdit: (rowId: string, columnId: string, value: string) => void;
-  handleDelete: (id: string) => void;
+  handleDelete?: (id: string) => void;
 }
 
 export const EditableStatusCell = ({

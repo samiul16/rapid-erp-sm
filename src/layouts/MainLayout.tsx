@@ -19,7 +19,7 @@ const MainLayout = () => {
         </div>
 
         {/* Content area with precise height calculation */}
-        <div className="flex flex-col flex-1 min-h-0 dark:bg-gray-900 max-w-[calc(100%-100px)]">
+        <div className="flex flex-col flex-1 min-h-0 dark:bg-gray-900 max-w-[calc(100%-120px)]">
           {" "}
           {/* min-h-0 prevents growing beyond parent */}
           {/* Outlet with exact remaining height (after navbar and footer) */}

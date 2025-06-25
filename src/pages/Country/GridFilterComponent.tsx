@@ -79,9 +79,9 @@ export default function SimpleFilterComponent({
   };
 
   return (
-    <div className="w-72 h-[350px] flex flex-col border rounded-lg overflow-hidden">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-900 border-b px-3 py-2">
+    <div className="w-72 h-[302px] flex flex-col border rounded-lg overflow-hidden">
+      {/* Fixed Header */}
+      <div className="border-b px-3 py-2 flex-shrink-0">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
@@ -106,7 +106,7 @@ export default function SimpleFilterComponent({
         </div>
       </div>
 
-      {/* Body */}
+      {/* Scrollable Body */}
       <div className="flex-1 overflow-y-auto px-2 py-2 space-y-4">
         {filterableFields
           .filter((key) => {
@@ -161,8 +161,8 @@ export default function SimpleFilterComponent({
           })}
       </div>
 
-      {/* Footer */}
-      <div className="bg-white dark:bg-gray-900 border-t px-3 py-2">
+      {/* Fixed Footer */}
+      <div className="bg-white dark:bg-gray-900 border-t px-4 py-2">
         <div className="flex justify-between">
           <Button
             variant="ghost"
