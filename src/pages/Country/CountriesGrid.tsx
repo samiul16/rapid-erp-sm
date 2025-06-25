@@ -89,7 +89,7 @@ export default function CountriesGrid({
           <div className="col-span-4 flex items-center gap-2">
             <Button
               variant="outline"
-              className="gap-2 cursor-pointer"
+              className="gap-2 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full min-w-[80px] sm:min-w-[100px]"
               onClick={() => handleViewModeChange("list")}
             >
               <List className="h-4 w-4" />
@@ -97,7 +97,7 @@ export default function CountriesGrid({
             </Button>
             <Button
               variant="outline"
-              className="gap-2 cursor-pointer"
+              className="gap-2 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full"
               onClick={() => {
                 console.log("Import Country Modal open");
                 open();
@@ -138,8 +138,8 @@ export default function CountriesGrid({
           <div className="col-span-4 flex items-center justify-end gap-2">
             <Button
               variant="outline"
-              className={`gap-2 cursor-pointer hover:bg-blue-400 hover:text-white ${
-                isExportOpen ? "bg-blue-400 text-white" : ""
+              className={`gap-2 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full ${
+                isExportOpen ? "bg-blue-700 text-white" : ""
               }`}
               onClick={() => {
                 setIsExportOpen(!isExportOpen);
@@ -152,8 +152,8 @@ export default function CountriesGrid({
 
             <Button
               variant="outline"
-              className={`gap-2 cursor-pointer hover:bg-blue-400 hover:text-white ${
-                isFilterOpen ? "bg-blue-400 text-white" : ""
+              className={`gap-2 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full ${
+                isFilterOpen ? "bg-blue-700 text-white" : ""
               }`}
               onClick={() => {
                 setIsFilterOpen(!isFilterOpen);
@@ -248,7 +248,7 @@ export default function CountriesGrid({
         <div
           className={`${
             isFilterOpen ? "w-1/5" : "w-0"
-          } pl-4 border-l dark:border-gray-700`}
+          } pl-4 dark:border-gray-700`}
         >
           {isFilterOpen && (
             <GridFilterComponent
@@ -263,7 +263,7 @@ export default function CountriesGrid({
         <div
           className={`${
             isExportOpen ? "w-1/5" : "w-0"
-          } pl-4 border-l dark:border-gray-700`}
+          } pl-4 dark:border-gray-700`}
         >
           {isExportOpen && (
             <GridExportComponent

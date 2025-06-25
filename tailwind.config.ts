@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import colors from "tailwindcss/colors";
 
 const config: Config = {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
@@ -6,7 +7,8 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        brand: "#74c0fc",
+        brand: colors.blue[400],
+        brandHover: colors.blue[600],
       },
     },
   },

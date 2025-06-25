@@ -39,7 +39,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Filter, X, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { EditableStatusCell } from "./EditableStatusCell";
+// import { EditableStatusCell } from "./EditableStatusCell";
 import { useTranslation } from "react-i18next";
 import { useDisclosure } from "@mantine/hooks";
 import {
@@ -278,6 +278,8 @@ export default function CountryDataTable({
             editValue={editValue}
             setEditValue={setEditValue}
             handleEdit={handleEdit}
+            selectedCell={selectedCell}
+            setSelectedCell={setSelectedCell}
           />
         ),
         filterFn: (row, columnId, filterValue) => {
@@ -305,6 +307,8 @@ export default function CountryDataTable({
             editValue={editValue}
             setEditValue={setEditValue}
             handleEdit={handleEdit}
+            selectedCell={selectedCell}
+            setSelectedCell={setSelectedCell}
           />
         ),
         filterFn: (row, columnId, filterValue) => {
@@ -323,10 +327,15 @@ export default function CountryDataTable({
           />
         ),
         cell: (info) => (
-          <EditableStatusCell
+          <EditableCell
             info={info}
+            editingCell={editingCell}
+            setEditingCell={setEditingCell}
+            editValue={editValue}
+            setEditValue={setEditValue}
             handleEdit={handleEdit}
-            handleDelete={handleDelete}
+            selectedCell={selectedCell}
+            setSelectedCell={setSelectedCell}
           />
         ),
         filterFn: (row, columnId, filterValue) => {
@@ -345,10 +354,15 @@ export default function CountryDataTable({
           />
         ),
         cell: (info) => (
-          <EditableStatusCell
+          <EditableCell
             info={info}
+            editingCell={editingCell}
+            setEditingCell={setEditingCell}
+            editValue={editValue}
+            setEditValue={setEditValue}
             handleEdit={handleEdit}
-            handleDelete={handleDelete}
+            selectedCell={selectedCell}
+            setSelectedCell={setSelectedCell}
           />
         ),
         filterFn: (row, columnId, filterValue) => {
@@ -366,8 +380,18 @@ export default function CountryDataTable({
             options={[...new Set(data.map((item) => item.createdAt))]}
           />
         ),
-        cell: (info) =>
-          new Date(info.getValue() as string).toLocaleDateString(),
+        cell: (info) => (
+          <EditableCell
+            info={info}
+            editingCell={editingCell}
+            setEditingCell={setEditingCell}
+            editValue={editValue}
+            setEditValue={setEditValue}
+            handleEdit={handleEdit}
+            selectedCell={selectedCell}
+            setSelectedCell={setSelectedCell}
+          />
+        ),
         filterFn: (row, columnId, filterValue) => {
           if (!filterValue || filterValue.length === 0) return true;
           const cellValue = new Date(row.getValue(columnId) as string)
@@ -393,7 +417,7 @@ export default function CountryDataTable({
         ),
       },
     ],
-    [data, editingCell, editValue]
+    [data, editingCell, editValue, selectedCell]
   );
 
   const [pagination, setPagination] = useState({
@@ -420,13 +444,10 @@ export default function CountryDataTable({
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-
-    // ✅ Add these for checkbox filter options to show up
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
-  // const [columnSearch, setColumnSearch] = useState("");
   const [allColumnsVisible, setAllColumnsVisible] = useState(
     table
       .getAllColumns()
@@ -438,6 +459,8 @@ export default function CountryDataTable({
 
   const handleCellClick = useCallback((rowIndex: number, columnId: string) => {
     setSelectedCell({ rowIndex, columnId });
+    // Clear editing state when selecting a new cell
+    setEditingCell(null);
   }, []);
 
   const isCellSelected = (rowIndex: number, columnId: string) => {
@@ -446,13 +469,22 @@ export default function CountryDataTable({
     );
   };
 
+  // Updated navigation functions
+  const navigateToCell = useCallback((rowIndex: number, columnId: string) => {
+    setSelectedCell({ rowIndex, columnId });
+    setEditingCell(null); // Exit editing mode when navigating
+  }, []);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      console.log("selectedCell", selectedCell.columnId, selectedCell.rowIndex);
+      // Don't handle navigation if we're in editing mode
+      if (editingCell) return;
+
       if (selectedCell.rowIndex === -1 || !selectedCell.columnId) return;
 
       const rows = table.getRowModel().rows;
-      const columnIds = table.getAllColumns().map((col) => col.id);
+      const columns = table.getAllColumns().filter((col) => col.getIsVisible());
+      const columnIds = columns.map((col) => col.id);
       const currentRowIndex = selectedCell.rowIndex;
       const currentColumnIndex = columnIds.indexOf(selectedCell.columnId);
 
@@ -479,22 +511,37 @@ export default function CountryDataTable({
             currentColumnIndex + 1
           );
           break;
+        case "Enter":
+          e.preventDefault();
+          // Enter edit mode for the selected cell
+          // eslint-disable-next-line no-case-declarations
+          const rowId = rows[currentRowIndex]?.id;
+          if (
+            rowId &&
+            selectedCell.columnId !== "select" &&
+            selectedCell.columnId !== "actions"
+          ) {
+            setEditingCell({ rowId, columnId: selectedCell.columnId });
+            const currentValue = rows[currentRowIndex].getValue(
+              selectedCell.columnId
+            );
+            setEditValue(currentValue);
+          }
+          return;
         default:
           return;
       }
 
-      setSelectedCell({
-        rowIndex: newRowIndex,
-        columnId: columnIds[newColumnIndex],
-      });
+      navigateToCell(newRowIndex, columnIds[newColumnIndex]);
     },
-    [selectedCell, table]
+    [selectedCell, table, editingCell, navigateToCell]
   );
 
   useEffect(() => {
     const tableElement = tableRef.current as HTMLTableElement;
     if (tableElement) {
       tableElement.addEventListener("keydown", handleKeyDown);
+      tableElement.setAttribute("tabindex", "0"); // Make table focusable
       return () => {
         tableElement.removeEventListener("keydown", handleKeyDown);
       };
@@ -508,11 +555,24 @@ export default function CountryDataTable({
           const updatedrow = { ...row, [columnId]: value };
           return updatedrow;
         }
-
         return row;
       });
     });
     setEditingCell(null);
+
+    // Keep the cell selected after editing
+    const rowIndex = table
+      .getRowModel()
+      .rows.findIndex((row) => row.id === rowId);
+    if (rowIndex !== -1) {
+      setSelectedCell({ rowIndex, columnId });
+    }
+
+    setTimeout(() => {
+      if (tableRef.current) {
+        tableRef.current.focus();
+      }
+    }, 0);
   };
 
   const handleDelete = () => {
@@ -546,7 +606,7 @@ export default function CountryDataTable({
             <Button
               variant="outline"
               onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-              className="gap-2 cursor-pointer"
+              className="gap-2 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full min-w-[80px] sm:min-w-[100px]"
             >
               {viewMode === "grid" ? (
                 <>
@@ -563,7 +623,7 @@ export default function CountryDataTable({
 
             <Button
               variant="outline"
-              className="gap-2 cursor-pointer"
+              className="gap-2 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full"
               onClick={() => openModal()}
             >
               <Import className="h-4 w-4" />
@@ -587,7 +647,7 @@ export default function CountryDataTable({
             {selectedRows.length > 0 && (
               <div className="flex items-center space-x-2 ml-2">
                 <Button
-                  className="disabled:opacity-500 cursor-pointer text-red-600"
+                  className="disabled:opacity-500 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full"
                   variant="outline"
                   size="sm"
                   onClick={handleBulkDelete}
@@ -596,7 +656,7 @@ export default function CountryDataTable({
                   Delete
                 </Button>
                 <Button
-                  className="disabled:opacity-500 cursor-pointer"
+                  className="disabled:opacity-500 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full"
                   variant="outline"
                   size="sm"
                   onClick={handleBulkUpdate}
@@ -636,12 +696,11 @@ export default function CountryDataTable({
                 selected {selectedRows.length} of total {data.length}
               </div>
             )}
-            {/* Export Dropdown */}
 
             <Button
               variant="outline"
-              className={`gap-2 cursor-pointer hover:bg-blue-400 hover:text-white ${
-                showExport ? "bg-blue-400 text-white" : ""
+              className={`gap-2 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full ${
+                showExport ? "bg-blue-700 text-white" : ""
               }`}
               onClick={() => {
                 setShowExport(!showExport);
@@ -654,8 +713,8 @@ export default function CountryDataTable({
 
             <Button
               variant="outline"
-              className={`gap-2 cursor-pointer hover:bg-blue-400 hover:text-white ${
-                showFilter ? "bg-blue-400 text-white" : ""
+              className={`gap-2 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full ${
+                showFilter ? "bg-blue-700 text-white" : ""
               }`}
               onClick={() => {
                 setShowFilter(!showFilter);
@@ -666,14 +725,16 @@ export default function CountryDataTable({
               <span className="hidden sm:inline">{t("common.filters")}</span>
             </Button>
 
-            {/* Columns visibility dropdown */}
             <Button
               variant="outline"
-              size="sm"
-              className={`gap-2 cursor-pointer hover:bg-blue-400 hover:text-white ${
-                showVisibility ? "bg-blue-400 text-white" : ""
+              className={`gap-2 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full ${
+                showVisibility ? "bg-blue-700 text-white" : ""
               }`}
-              onClick={() => setShowVisibility(true)}
+              onClick={() => {
+                setShowVisibility(true);
+                setShowFilter(false);
+                setShowExport(false);
+              }}
             >
               Visibility
             </Button>
@@ -682,12 +743,14 @@ export default function CountryDataTable({
       </div>
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 flex overflow-hidden">
-          {/* Table container with horizontal scrolling */}
           <div className="flex-1 overflow-auto">
-            <div ref={tableRef} className="relative h-full min-w-full">
+            <div
+              ref={tableRef}
+              className="relative h-full min-w-full focus:outline-none"
+              tabIndex={0}
+            >
               <div className="inline-block min-w-full align-middle">
                 <table className="min-w-full dark:bg-gray-900">
-                  {/* Fixed header */}
                   <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
                     {table.getHeaderGroups().map((headerGroup) => (
                       <tr key={headerGroup.id}>
@@ -700,7 +763,7 @@ export default function CountryDataTable({
                               cursor: header.column.getCanSort()
                                 ? "pointer"
                                 : "default",
-                              backgroundColor: "inherit", // Ensures sticky header background matches
+                              backgroundColor: "inherit",
                             }}
                           >
                             {flexRender(
@@ -713,7 +776,6 @@ export default function CountryDataTable({
                     ))}
                   </thead>
 
-                  {/* Scrollable body */}
                   <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900">
                     {table.getRowModel().rows.map((row) => (
                       <tr
@@ -734,9 +796,31 @@ export default function CountryDataTable({
                             }`}
                             data-row-id={row.id}
                             data-col-id={cell.column.id}
-                            onClick={() =>
-                              handleCellClick(row.index, cell.column.id)
-                            }
+                            onClick={(e) => {
+                              // Only handle single click if it's not part of a double-click
+                              if (e.detail === 1) {
+                                handleCellClick(row.index, cell.column.id);
+                              }
+                            }}
+                            onDoubleClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              // Handle double-click for editable cells
+                              if (
+                                cell.column.id !== "select" &&
+                                cell.column.id !== "actions"
+                              ) {
+                                setSelectedCell({
+                                  rowIndex: row.index,
+                                  columnId: cell.column.id,
+                                });
+                                setEditingCell({
+                                  rowId: row.id,
+                                  columnId: cell.column.id,
+                                });
+                                setEditValue(row.getValue(cell.column.id));
+                              }
+                            }}
                           >
                             {flexRender(
                               cell.column.columnDef.cell,
@@ -786,15 +870,11 @@ export default function CountryDataTable({
           </div>
         )}
       </div>
-
-      {/* <div className="sticky bottom-0 bg-white dark:bg-gray-900 pt-2 border-t">
-        <PaginationControls table={table} />
-      </div> */}
     </div>
   );
 }
 
-// Update the ColumnFilterHeader component
+// Updated ColumnFilterHeader component
 function ColumnFilterHeader({
   column,
   title,
@@ -810,7 +890,6 @@ function ColumnFilterHeader({
   const currentFilter = column.getFilterValue();
   const sortDirection = column.getIsSorted();
 
-  // Initialize selected options from current filter
   useEffect(() => {
     if (currentFilter && Array.isArray(currentFilter)) {
       setSelectedOptions(currentFilter);
@@ -835,9 +914,9 @@ function ColumnFilterHeader({
 
   const toggleSorting = () => {
     if (sortDirection === "asc") {
-      column.toggleSorting(true); // Set to desc
+      column.toggleSorting(true);
     } else {
-      column.toggleSorting(false); // Set to asc
+      column.toggleSorting(false);
     }
   };
 
@@ -849,7 +928,6 @@ function ColumnFilterHeader({
     <div className="flex items-center gap-1 group">
       <span>{title}</span>
 
-      {/* Single sorting button that toggles direction */}
       <button
         onClick={toggleSorting}
         className={`p-1 rounded transition-opacity ${
@@ -867,7 +945,6 @@ function ColumnFilterHeader({
         )}
       </button>
 
-      {/* Filter button - always show when active or menu open, otherwise on hover */}
       <div
         className={`${
           isFilterOpen || selectedOptions.length > 0
@@ -888,7 +965,6 @@ function ColumnFilterHeader({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
-            {/* Search Input */}
             <div className="p-2">
               <Input
                 placeholder={`Search ${title}`}
@@ -969,6 +1045,7 @@ function EditableCell({
   editValue,
   setEditValue,
   handleEdit,
+  setSelectedCell,
 }: {
   info: any;
   editingCell: { rowId: string; columnId: string } | null;
@@ -978,6 +1055,10 @@ function EditableCell({
   editValue: any;
   setEditValue: React.Dispatch<React.SetStateAction<any>>;
   handleEdit: (rowId: string, columnId: string, value: any) => void;
+  selectedCell: { rowIndex: number; columnId: string };
+  setSelectedCell: React.Dispatch<
+    React.SetStateAction<{ rowIndex: number; columnId: string }>
+  >;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const isEditing =
@@ -991,29 +1072,36 @@ function EditableCell({
   }, [isEditing]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    e.stopPropagation(); // Prevent table navigation while editing
+
     if (e.key === "Enter") {
       handleEdit(info.row.id, info.column.id, editValue);
-      focusNextCell(info.row.id, info.column.id);
+      // Keep cell selected after editing
+      setSelectedCell({ rowIndex: info.row.index, columnId: info.column.id });
     }
     if (e.key === "Escape") {
       setEditingCell(null);
+      // Return to selection mode
+      setSelectedCell({ rowIndex: info.row.index, columnId: info.column.id });
     }
-    if (e.key === "ArrowRight") {
+    if (e.key === "Tab") {
+      e.preventDefault();
       handleEdit(info.row.id, info.column.id, editValue);
-      focusNextCell(info.row.id, info.column.id);
-    }
-    if (e.key === "ArrowLeft") {
-      handleEdit(info.row.id, info.column.id, editValue);
-      focusPreviousCell(info.row.id, info.column.id);
+      if (e.shiftKey) {
+        focusPreviousCell(info.row.id, info.column.id);
+      } else {
+        focusNextCell(info.row.id, info.column.id);
+      }
     }
   };
 
   const focusNextCell = (rowId: string, columnId: string) => {
+    console.log(rowId, columnId);
     const columnsOrder = [
       "select",
       "title",
       "code",
-      "rating",
+      "callingCode",
       "status",
       "createdAt",
       "actions",
@@ -1023,33 +1111,20 @@ function EditableCell({
 
     // If we're at the last column, move to first column of next row
     if (currentIndex === columnsOrder.length - 1) {
-      const nextRow = document.querySelector(
-        `[data-row-id="${parseInt(rowId) + 1}"]`
-      );
-      if (nextRow) {
-        const firstCell = nextRow.querySelector(
-          `[data-col-id="${columnsOrder[0]}"]`
-        );
-        if (firstCell) {
-          (firstCell as HTMLElement).click();
-        }
-      }
+      const nextRowIndex = info.row.index + 1;
+      setSelectedCell({ rowIndex: nextRowIndex, columnId: columnsOrder[0] });
     } else {
-      const nextCell = document.querySelector(
-        `[data-row-id="${rowId}"] [data-col-id="${nextColumnId}"]`
-      );
-      if (nextCell) {
-        (nextCell as HTMLElement).click();
-      }
+      setSelectedCell({ rowIndex: info.row.index, columnId: nextColumnId });
     }
   };
 
   const focusPreviousCell = (rowId: string, columnId: string) => {
+    console.log(rowId, columnId);
     const columnsOrder = [
       "select",
       "title",
       "code",
-      "rating",
+      "callingCode",
       "status",
       "createdAt",
       "actions",
@@ -1062,35 +1137,21 @@ function EditableCell({
 
     // If we're at the first column, move to last column of previous row
     if (currentIndex === 0) {
-      const prevRow = document.querySelector(
-        `[data-row-id="${parseInt(rowId) - 1}"]`
-      );
-      if (prevRow) {
-        const lastCell = prevRow.querySelector(
-          `[data-col-id="${columnsOrder[columnsOrder.length - 1]}"]`
-        );
-        if (lastCell) {
-          (lastCell as HTMLElement).click();
-        }
-      }
+      const prevRowIndex = Math.max(0, info.row.index - 1);
+      setSelectedCell({
+        rowIndex: prevRowIndex,
+        columnId: columnsOrder[columnsOrder.length - 1],
+      });
     } else {
-      const prevCell = document.querySelector(
-        `[data-row-id="${rowId}"] [data-col-id="${prevColumnId}"]`
-      );
-      if (prevCell) {
-        (prevCell as HTMLElement).click();
-      }
+      setSelectedCell({ rowIndex: info.row.index, columnId: prevColumnId });
     }
   };
 
   // Function to get flag from country code
   const getFlagImage = (countryCode: string) => {
     if (!countryCode) return null;
-    // Convert to lowercase for the URL
     const code = countryCode.toLowerCase();
     return `https://flagcdn.com/16x12/${code}.png`;
-    // For higher resolution: `https://flagcdn.com/32x24/${code}.png`
-    // For SVG: `https://flagcdn.com/${code}.svg`
   };
 
   if (isEditing) {
@@ -1101,41 +1162,102 @@ function EditableCell({
         value={editValue}
         onChange={(e) => setEditValue(e.target.value)}
         onKeyDown={handleKeyDown}
-        onBlur={() => handleEdit(info.row.id, info.column.id, editValue)}
-        className="h-8 w-full"
+        onBlur={() => {
+          handleEdit(info.row.id, info.column.id, editValue);
+          setSelectedCell({
+            rowIndex: info.row.index,
+            columnId: info.column.id,
+          });
+        }}
+        className="h-full w-full border-0 outline-0 focus:ring-0 focus:border-0 p-0 bg-white dark:bg-gray-800"
+        style={{
+          minHeight: "100%",
+          margin: "-1rem -1.5rem",
+          padding: "1rem 1.5rem",
+          borderRadius: 0,
+          width: "calc(100% + 3rem)",
+          marginLeft: "-1.5rem",
+        }}
       />
     );
   }
 
   return (
-    <div
-      className="cursor-pointer hover:bg-gray-100 p-1 rounded min-h-[32px] flex items-center dark:bg-gray-900"
-      onClick={() => {
-        setEditingCell({ rowId: info.row.id, columnId: info.column.id });
-        setEditValue(info.getValue());
-      }}
-    >
+    <div className="cursor-pointer hover:bg-gray-100 p-1 rounded min-h-[32px] flex items-center dark:hover:bg-gray-800">
       {/* Add flag before country name for title column */}
       {info.column.id === "title" && info.row.original.code && (
         <img
           src={getFlagImage(info.row.original.code) || ""}
           alt={`${info.getValue()} flag`}
           className="w-5 h-4 mr-2 object-contain"
-          loading="lazy" // Optional: lazy loading
+          loading="lazy"
           onError={(e) => {
-            // Fallback in case the flag doesn't exist
             (e.target as HTMLImageElement).style.display = "none";
           }}
         />
       )}
-      {info.getValue()}
+      {info.column.id === "createdAt"
+        ? new Date(info.getValue() as string).toLocaleDateString()
+        : info.getValue()}
     </div>
   );
 }
 
 function PaginationControls({ table }: { table: any }) {
-  const defaultSizes = [5, 10, 20];
-  const moreSizes = [30, 40, 50, 100, 200];
+  const [pageInputValue, setPageInputValue] = useState(
+    (table.getState().pagination.pageIndex + 1).toString()
+  );
+
+  const defaultSizes = [10, 25, 50, 100];
+  const moreSizes = [200, 300, 400];
+
+  const currentPage = table.getState().pagination.pageIndex + 1;
+  const totalPages = table.getPageCount();
+  const pageSize = table.getState().pagination.pageSize;
+  const totalRows = table.getFilteredRowModel().rows.length;
+
+  // Calculate the range of items being shown
+  const startItem = table.getState().pagination.pageIndex * pageSize + 1;
+  const endItem = Math.min(startItem + pageSize - 1, totalRows);
+
+  const handlePageInputChange = (value: string) => {
+    setPageInputValue(value);
+  };
+
+  const handlePageInputSubmit = () => {
+    const pageNumber = parseInt(pageInputValue);
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      table.setPageIndex(pageNumber - 1);
+    } else {
+      // Reset to current page if invalid
+      setPageInputValue(currentPage.toString());
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handlePageInputSubmit();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+      e.preventDefault(); // Prevent default number input behavior
+
+      const currentPageIndex = table.getState().pagination.pageIndex;
+
+      if (e.key === "ArrowUp" && currentPageIndex < totalPages - 1) {
+        table.setPageIndex(currentPageIndex + 1);
+      } else if (e.key === "ArrowDown" && currentPageIndex > 0) {
+        table.setPageIndex(currentPageIndex - 1);
+      }
+    }
+  };
+
+  // Update input value when page changes externally
+  useEffect(() => {
+    setPageInputValue(currentPage.toString());
+  }, [currentPage]);
 
   return (
     <div className="flex items-center justify-between px-2 mt-4">
@@ -1154,7 +1276,7 @@ function PaginationControls({ table }: { table: any }) {
             className={`min-w-[40px] ${
               table.getState().pagination.pageSize === pageSize
                 ? "bg-blue-500 text-white hover:bg-blue-600"
-                : "bg-white text-blue-500 border-blue-500 hover:bg-blue-600"
+                : "bg-white text-blue-500 border-blue-500 hover:bg-blue-50"
             }`}
           >
             {pageSize}
@@ -1164,7 +1286,11 @@ function PaginationControls({ table }: { table: any }) {
         {/* More page sizes popup */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button size="sm" variant="outline" className="min-w-[40px]">
+            <Button
+              size="sm"
+              variant="outline"
+              className="min-w-[40px] bg-white text-blue-500 border-blue-500 hover:bg-blue-50"
+            >
               <MoreHorizontal className="w-4 h-4" />
             </Button>
           </PopoverTrigger>
@@ -1181,8 +1307,8 @@ function PaginationControls({ table }: { table: any }) {
                 onClick={() => table.setPageSize(Number(pageSize))}
                 className={`w-full justify-start ${
                   table.getState().pagination.pageSize === pageSize
-                    ? "bg-white text-blue-500 border-blue-500 hover:bg-white hover:text-blue-600"
-                    : ""
+                    ? "bg-blue-500 text-white hover:bg-blue-600"
+                    : "hover:bg-blue-50"
                 }`}
               >
                 {pageSize}
@@ -1192,6 +1318,12 @@ function PaginationControls({ table }: { table: any }) {
         </Popover>
       </div>
 
+      {/* Data count display */}
+      <div className="text-sm text-gray-600">
+        Showing {startItem}-{endItem} of {totalRows}{" "}
+        {totalRows === 1 ? "entry" : "entries"}
+      </div>
+
       {/* Pagination navigation buttons */}
       <div className="flex items-center space-x-2">
         <Button
@@ -1199,6 +1331,7 @@ function PaginationControls({ table }: { table: any }) {
           size="sm"
           onClick={() => table.setPageIndex(0)}
           disabled={!table.getCanPreviousPage()}
+          className="bg-white hover:bg-gray-50"
         >
           <ChevronsLeft className="h-4 w-4" />
         </Button>
@@ -1207,13 +1340,25 @@ function PaginationControls({ table }: { table: any }) {
           size="sm"
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
+          className="bg-white hover:bg-gray-50"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
 
-        <div className="px-3 py-1 text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
-          {table.getPageCount()}
+        <div className="flex items-center space-x-1 text-sm">
+          <span>Page</span>
+          <Input
+            type="number"
+            min="1"
+            max={totalPages}
+            value={pageInputValue}
+            onChange={(e) => handlePageInputChange(e.target.value)}
+            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
+            onBlur={handlePageInputSubmit}
+            className="w-16 h-8 text-center border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+          />
+          <span>of {totalPages}</span>
         </div>
 
         <Button
@@ -1221,6 +1366,7 @@ function PaginationControls({ table }: { table: any }) {
           size="sm"
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
+          className="bg-white hover:bg-gray-50"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -1229,6 +1375,7 @@ function PaginationControls({ table }: { table: any }) {
           size="sm"
           onClick={() => table.setPageIndex(table.getPageCount() - 1)}
           disabled={!table.getCanNextPage()}
+          className="bg-white hover:bg-gray-50"
         >
           <ChevronsRight className="h-4 w-4" />
         </Button>

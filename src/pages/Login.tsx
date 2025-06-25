@@ -50,7 +50,7 @@ const Login = () => {
       });
 
       dispatch(login({ email: data.email }));
-      navigate("/");
+      navigate("/dashboard");
     } catch (error) {
       console.error("Login failed:", error);
     }

@@ -17,6 +17,8 @@ import {
   ChevronRight,
   Sun,
   Moon,
+  Building2,
+  Map,
 } from "lucide-react";
 import clsx from "clsx";
 import { useTheme } from "@/hooks/useTheme";
@@ -49,6 +51,30 @@ const Sidebar = () => {
   ];
 
   const scrollableMenus = [
+    {
+      key: "users",
+      icon: Users,
+      label: t("sidebar.menu.users"),
+      path: "/users",
+    },
+    {
+      key: "user-master",
+      icon: Users,
+      label: t("sidebar.menu.userMaster"),
+      path: "/user-master",
+    },
+    {
+      key: "states",
+      icon: Map,
+      label: t("sidebar.menu.states"),
+      path: "/states",
+    },
+    {
+      key: "cities",
+      icon: Building2,
+      label: t("sidebar.menu.cities"),
+      path: "/cities",
+    },
     {
       key: "pos",
       icon: ShoppingCart,
@@ -138,11 +164,11 @@ const Sidebar = () => {
           "absolute z-10 w-8 h-8 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-all",
           isRTL
             ? isCollapsed
-              ? "right-0 translate-x-1/4"
-              : "right-[6rem] translate-x-1/4"
+              ? "right-0 translate-x-1/12"
+              : "right-[6rem] translate-x-1/12"
             : isCollapsed
-            ? "left-0 -translate-x-1/4"
-            : "left-[6rem] -translate-x-1/4"
+            ? "left-0 -translate-x-1/12"
+            : "left-[6rem] -translate-x-1/12"
         )}
         style={{ top: "7%", transform: "translateY(-50%)" }}
       >
@@ -164,7 +190,7 @@ const Sidebar = () => {
         className={clsx(
           "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 h-[calc(100vh-4rem)]",
           isRTL ? "border-l" : "border-r",
-          isCollapsed ? "w-0 overflow-hidden" : "w-24"
+          isCollapsed ? "w-0 overflow-hidden" : "w-28"
         )}
       >
         {/* Top Fixed Menus */}
@@ -176,8 +202,7 @@ const Sidebar = () => {
                 className={clsx(
                   "relative group flex flex-col items-center transition-all w-full py-2",
                   {
-                    "bg-blue-400 dark:bg-blue-600 text-white":
-                      activeMenu === key,
+                    "text-blue-500 border-b": activeMenu === key,
                     "text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800":
                       activeMenu !== key,
                   }
@@ -212,8 +237,7 @@ const Sidebar = () => {
                 className={clsx(
                   "relative group flex flex-col items-center transition-all w-full my-2 py-2",
                   {
-                    "bg-blue-400 dark:bg-blue-600 text-white":
-                      activeMenu === key,
+                    "text-blue-500 border-b": activeMenu === key,
                     "text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800":
                       activeMenu !== key,
                   }
@@ -249,8 +273,7 @@ const Sidebar = () => {
                   className={clsx(
                     "relative group flex flex-col items-center transition-all w-full py-1",
                     {
-                      "bg-blue-400 dark:bg-blue-600 text-white":
-                        activeMenu === key,
+                      " border-b text-blue-500": activeMenu === key,
                       "text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800":
                         activeMenu !== key,
                     }
