@@ -22,6 +22,7 @@ export default function UserMastersPage() {
     active: 30,
     inactive: 5,
     deleted: 2,
+    updated: 2,
   };
 
   // YouTube video ID (the part after 'v=' in the URL)

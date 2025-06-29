@@ -415,8 +415,9 @@ export default function CommonDataTable({
   const selectedRows = table.getSelectedRowModel().rows;
 
   return (
-    <div className="px-4 py-3 h-full flex flex-col">
-      <div className="pb-4">
+    <div className="h-full flex flex-col px-4 py-3">
+      {/* Header Controls - Fixed height */}
+      <div className="flex-shrink-0 pb-4">
         <div className="grid grid-cols-12 gap-4 items-center">
           {/* Left column - View toggle, Import, and Bulk actions */}
           <div className="col-span-4 flex items-center gap-2">
@@ -452,28 +453,6 @@ export default function CommonDataTable({
               Visibility
             </Button>
 
-            {/* <Button
-              variant="outline"
-              className="gap-2 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full"
-              onClick={() => openModal()}
-            >
-              <Import className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("common.import")}</span>
-            </Button>
-
-            <Modal
-              opened={opened}
-              onClose={closeModal}
-              title="Import User"
-              size="xl"
-              overlayProps={{
-                backgroundOpacity: 0.55,
-                blur: 3,
-              }}
-            >
-              <div className="pt-5 pb-14 px-5">{modalData.message}</div>
-            </Modal> */}
-
             {/* Bulk actions - only show when rows are selected */}
             {selectedRows.length > 0 && (
               <div className="flex items-center space-x-2 ml-2">
@@ -500,11 +479,7 @@ export default function CommonDataTable({
 
           {/* Middle column - Search with mic */}
           <div className="col-span-4 flex justify-center">
-            {" "}
-            {/* Changed justify-end to justify-center */}
             <div className="w-full max-w-xs mx-auto">
-              {" "}
-              {/* Changed max-w-md to max-w-xs and added mx-auto */}
               <div className="relative flex items-center rounded-full">
                 <Search className="absolute left-3 h-4 w-4 text-gray-400" />
                 <Input
@@ -563,13 +538,19 @@ export default function CommonDataTable({
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Table Container with proper scrolling */}
+      {/* Main Content Area - Flexible height */}
+      <div className="flex-1 flex overflow-hidden min-h-0">
+        {/* Table Container - Takes remaining space */}
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+          {/* Table with scrollable body */}
           <div
             ref={tableContainerRef}
-            className="flex-1 overflow-auto focus:outline-none border border-gray-200 rounded-lg"
+            className="flex-1 overflow-auto focus:outline-none border border-gray-200 rounded-lg min-h-0"
             tabIndex={0}
+            style={{
+              height: "calc(100vh - 700px)", // Adjust based on your footer height and other elements
+              minHeight: "200px", // Minimum height for small screens
+            }}
           >
             <table className="w-full border-collapse">
               <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
@@ -664,12 +645,13 @@ export default function CommonDataTable({
             </table>
           </div>
 
-          {/* Table Footer - Fixed */}
-          <div className="flex-shrink-0 bg-white dark:bg-gray-900">
+          {/* Pagination Footer - Fixed at bottom */}
+          <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-t">
             <PaginationControls table={table} />
           </div>
         </div>
 
+        {/* Side Panels */}
         {showExport && (
           <div className="w-72 flex-shrink-0 border-l bg-white dark:bg-gray-800">
             <ExportComponent
@@ -1095,110 +1077,6 @@ function StatusEditableCell({
     </div>
   );
 }
-
-// function PaginationControls({ table }: { table: any }) {
-//   const defaultSizes = [5, 10, 20];
-//   const moreSizes = [30, 40, 50, 100, 200];
-
-//   return (
-//     <div className="flex items-center justify-between px-2 py-4">
-//       {/* Page size buttons */}
-//       <div className="flex items-center space-x-2">
-//         {defaultSizes.map((pageSize) => (
-//           <Button
-//             key={pageSize}
-//             variant={
-//               table.getState().pagination.pageSize === pageSize
-//                 ? "default"
-//                 : "outline"
-//             }
-//             size="sm"
-//             onClick={() => table.setPageSize(Number(pageSize))}
-//             className={`min-w-[40px] ${
-//               table.getState().pagination.pageSize === pageSize
-//                 ? "bg-blue-500 text-white hover:bg-blue-600"
-//                 : "bg-white text-blue-500 border-blue-500 hover:bg-blue-600"
-//             }`}
-//           >
-//             {pageSize}
-//           </Button>
-//         ))}
-
-//         {/* More page sizes popup */}
-//         <Popover>
-//           <PopoverTrigger asChild>
-//             <Button size="sm" variant="outline" className="min-w-[40px]">
-//               <MoreHorizontal className="w-4 h-4" />
-//             </Button>
-//           </PopoverTrigger>
-//           <PopoverContent className="w-auto p-2 space-y-1">
-//             {moreSizes.map((pageSize) => (
-//               <Button
-//                 key={pageSize}
-//                 variant={
-//                   table.getState().pagination.pageSize === pageSize
-//                     ? "default"
-//                     : "outline"
-//                 }
-//                 size="sm"
-//                 onClick={() => table.setPageSize(Number(pageSize))}
-//                 className={`w-full justify-start ${
-//                   table.getState().pagination.pageSize === pageSize
-//                     ? "bg-white text-blue-500 border-blue-500 hover:bg-white hover:text-blue-600"
-//                     : ""
-//                 }`}
-//               >
-//                 {pageSize}
-//               </Button>
-//             ))}
-//           </PopoverContent>
-//         </Popover>
-//       </div>
-
-//       {/* Pagination navigation buttons */}
-//       <div className="flex items-center space-x-2">
-//         <Button
-//           variant="outline"
-//           size="sm"
-//           onClick={() => table.setPageIndex(0)}
-//           disabled={!table.getCanPreviousPage()}
-//         >
-//           <ChevronsLeft className="h-4 w-4" />
-//         </Button>
-//         <Button
-//           variant="outline"
-//           size="sm"
-//           onClick={() => table.previousPage()}
-//           disabled={!table.getCanPreviousPage()}
-//         >
-//           <ChevronLeft className="h-4 w-4" />
-//         </Button>
-
-//         <div className="px-3 py-1 text-sm font-medium">
-//           Page {table.getState().pagination.pageIndex + 1} of{" "}
-//           {table.getPageCount()}
-//         </div>
-
-//         <Button
-//           variant="outline"
-//           size="sm"
-//           onClick={() => table.nextPage()}
-//           disabled={!table.getCanNextPage()}
-//         >
-//           <ChevronRight className="h-4 w-4" />
-//         </Button>
-//         <Button
-//           variant="outline"
-//           size="sm"
-//           onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-//           disabled={!table.getCanNextPage()}
-//         >
-//           <ChevronsRight className="h-4 w-4" />
-//         </Button>
-//       </div>
-//     </div>
-//   );
-// }
 
 function PaginationControls({ table }: { table: any }) {
   const [pageInputValue, setPageInputValue] = useState(

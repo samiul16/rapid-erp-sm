@@ -25,7 +25,7 @@ export default function StatesPage() {
   const videoId = "STATE_VIDEO_ID"; // Replace with actual state-related video ID
 
   return (
-    <div className="container mx-auto px-4 py-4 dark:bg-gray-900">
+    <div className="container mx-auto px-4 py-4 bg-brand dark:bg-gray-900">
       {/* Header Section */}
       <div className="flex items-center gap-4 mb-4">
         <YoutubeButton videoId={videoId} />

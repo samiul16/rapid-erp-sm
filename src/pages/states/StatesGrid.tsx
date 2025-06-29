@@ -10,7 +10,7 @@ import {
   Search,
   RefreshCw,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -259,6 +259,70 @@ export default function StatesGrid({
     message: <ImportStepper />,
   });
 
+  // Infinite scroll states
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [, setPage] = useState(1);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const ITEMS_PER_PAGE = 4;
+
+  // Simulate API call to load more data
+  const loadMoreData = useCallback(async () => {
+    if (isLoading || !hasMore) return;
+
+    setIsLoading(true);
+
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
+    // Generate more mock data for demonstration
+    const newItems = Array.from({ length: ITEMS_PER_PAGE }, (_, index) => ({
+      id: `${Date.now()}-${index}`,
+      name: `State ${statesData.length + index + 1}`,
+      country: ["United States", "Canada", "Australia", "Germany"][
+        Math.floor(Math.random() * 4)
+      ],
+      description: `Generated state description for demonstration ${
+        statesData.length + index + 1
+      }`,
+      default: false,
+      status: Math.random() > 0.5 ? "active" : "inactive",
+      deleted: false,
+    }));
+
+    // Stop loading more after reaching 50 items for demo
+    if (statesData.length >= 46) {
+      setHasMore(false);
+    } else {
+      setStatesData((prev) => [...prev, ...newItems]);
+      setPage((prev) => prev + 1);
+    }
+
+    setIsLoading(false);
+  }, [statesData.length, isLoading, hasMore]);
+
+  // Infinite scroll handler
+  const handleScroll = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const threshold = 100; // Load more when 100px from bottom
+
+    if (scrollHeight - scrollTop <= clientHeight + threshold) {
+      loadMoreData();
+    }
+  }, [loadMoreData]);
+
+  // Add scroll event listener
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
   const handleDeleteClick = (stateId: string) => {
     setStateToDelete(stateId);
     setIsShowResetButton(true);
@@ -385,6 +449,7 @@ export default function StatesGrid({
       <div className="flex flex-1 overflow-hidden mt-2 gap-4">
         {/* Cards container - dynamic width */}
         <div
+          ref={scrollContainerRef}
           className={`${
             isFilterOpen || isExportOpen ? "flex-1" : "w-full"
           } overflow-y-auto scroll-smooth smooth-scroll`}
@@ -467,6 +532,25 @@ export default function StatesGrid({
               </Card>
             ))}
           </div>
+
+          {/* Loading indicator */}
+          {isLoading && (
+            <div className="flex justify-center items-center py-8">
+              <div className="flex items-center gap-2 text-blue-600">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <span className="text-sm">Loading more states...</span>
+              </div>
+            </div>
+          )}
+
+          {/* End of data indicator */}
+          {!hasMore && filteredStates.length > 8 && (
+            <div className="flex justify-center items-center py-8">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                No more states to load
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Filter component */}

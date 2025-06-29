@@ -1,15 +1,23 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, RefreshCw } from "lucide-react";
+import {
+  Trash2,
+  RefreshCw,
+  List,
+  Import,
+  Download,
+  Filter,
+  Mic,
+  Search,
+} from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
-// import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import GridFilterComponent from "@/pages/Country/GridFilterComponent";
 import GridExportComponent from "@/pages/Country/GridExportComponent";
 import { Modal } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import ImportStepper from "@/components/common/ImportStepper";
-import PageHeader from "@/components/common/PageHeader"; // Import the comprehensive reusable component
+import { Input } from "@/components/ui/input";
 
 // Mock data - replace with real data from your API
 const areas = [
@@ -240,7 +248,6 @@ export default function AreasGrid({
 }: {
   setViewMode: (viewMode: "grid" | "list") => void;
 }) {
-  //   const { t } = useTranslation();
   const navigate = useNavigate();
   const [areaToDelete, setAreaToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -248,7 +255,6 @@ export default function AreasGrid({
   const [areasData, setAreasData] = useState(areas);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
-  const [currentViewMode] = useState<"grid" | "list">("grid");
   const [opened, { open, close }] = useDisclosure(false);
   const [modalData, setModalData] = useState({
     title: "Import Area",
@@ -256,12 +262,11 @@ export default function AreasGrid({
   });
 
   // Infinite scroll states
-  const [displayedItems, setDisplayedItems] = useState(5);
+  const [displayedItems, setDisplayedItems] = useState(8);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  const ITEMS_PER_PAGE = 5;
+  const ITEMS_PER_PAGE = 8;
 
   const handleDeleteClick = (areaId: string) => {
     setAreaToDelete(areaId);
@@ -294,16 +299,30 @@ export default function AreasGrid({
     );
   };
 
-  // Handle search query change
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query);
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
 
-  // Handle microphone click
   const handleMicClick = () => {
     console.log("Voice search activated for areas");
-    // You can implement voice search functionality here
-    // For example: start speech recognition, open voice search modal, etc.
+  };
+
+  const handleImportClick = () => {
+    open();
+    setModalData({
+      title: "Import Area",
+      message: <ImportStepper />,
+    });
+  };
+
+  const handleExportClick = () => {
+    setIsExportOpen(!isExportOpen);
+    setIsFilterOpen(false);
+  };
+
+  const handleFilterClick = () => {
+    setIsFilterOpen(!isFilterOpen);
+    setIsExportOpen(false);
   };
 
   // Filter areas based on search query
@@ -320,7 +339,6 @@ export default function AreasGrid({
 
     setIsLoading(true);
 
-    // Simulate API delay
     setTimeout(() => {
       const newDisplayedItems = displayedItems + ITEMS_PER_PAGE;
       setDisplayedItems(newDisplayedItems);
@@ -346,34 +364,6 @@ export default function AreasGrid({
     }
   }, [loadMore, hasMore, isLoading]);
 
-  // Handle import click
-  const handleImportClick = () => {
-    console.log("Import Area Modal open");
-    open();
-    setModalData({
-      title: "Import Area",
-      message: <ImportStepper />,
-    });
-  };
-
-  // Handle export click
-  const handleExportClick = () => {
-    console.log("Export clicked for areas");
-    // You can implement export functionality here
-    // For example: download as CSV, PDF, etc.
-    setIsExportOpen(!isExportOpen);
-    setIsFilterOpen(false);
-  };
-
-  // Handle filter click
-  const handleFilterClick = () => {
-    console.log("Filter clicked for areas");
-    // You can implement filter functionality here
-    // For example: open filter modal, apply filters, etc.
-    setIsFilterOpen(!isFilterOpen);
-    setIsExportOpen(false);
-  };
-
   // Attach scroll listener
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -385,45 +375,94 @@ export default function AreasGrid({
 
   // Reset pagination when search changes
   useEffect(() => {
-    setDisplayedItems(5);
-    setHasMore(filteredAreas.length > 5);
+    setDisplayedItems(ITEMS_PER_PAGE);
+    setHasMore(filteredAreas.length > ITEMS_PER_PAGE);
   }, [searchQuery, filteredAreas.length]);
 
   return (
-    <div className="px-4 py-3 h-full flex flex-col bg-white dark:bg-gray-900">
-      {/* Reusable Page Header Component */}
-      <PageHeader
-        // Search props
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchChange}
-        searchPlaceholder="Search areas..."
-        showMicButton={true}
-        onMicClick={handleMicClick}
-        // Left buttons props
-        showViewModeButtons={true}
-        currentViewMode={currentViewMode}
-        onViewModeChange={handleViewModeChange}
-        showImportButton={true}
-        onImportClick={handleImportClick}
-        // Right buttons props
-        showExportButton={true}
-        isExportActive={isExportOpen}
-        onExportClick={handleExportClick}
-        showFilterButton={true}
-        isFilterActive={isFilterOpen}
-        onFilterClick={handleFilterClick}
-      />
+    <div className="h-full flex flex-col bg-white dark:bg-gray-900">
+      {/* Header with grid layout */}
+      <div className="sticky top-0 z-30 bg-white dark:bg-gray-900 px-4 py-3 border-b">
+        <div className="grid grid-cols-12 gap-4 items-center">
+          {/* Left buttons */}
+          <div className="col-span-4 flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="gap-2 cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 rounded-full min-w-[80px]"
+              onClick={() => handleViewModeChange("list")}
+            >
+              <List className="h-4 w-4" />
+              <span className="hidden sm:inline">List</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2 cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 rounded-full"
+              onClick={handleImportClick}
+            >
+              <Import className="h-4 w-4" />
+              <span className="hidden sm:inline">Import</span>
+            </Button>
+          </div>
+
+          {/* Search */}
+          <div className="col-span-4 flex justify-center">
+            <div className="w-full max-w-md">
+              <div className="relative flex items-center rounded-full">
+                <Search className="absolute left-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search areas..."
+                  className="pl-9 pr-9 w-full rounded-full"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="absolute right-2 h-6 w-6 rounded-full cursor-pointer p-0"
+                  onClick={handleMicClick}
+                >
+                  <Mic className="h-4 w-4 text-blue-400" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Right buttons */}
+          <div className="col-span-4 flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              className={`gap-2 cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 rounded-full ${
+                isExportOpen ? "bg-blue-100 text-blue-800" : ""
+              }`}
+              onClick={handleExportClick}
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Export</span>
+            </Button>
+            <Button
+              variant="outline"
+              className={`gap-2 cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 rounded-full ${
+                isFilterOpen ? "bg-blue-100 text-blue-800" : ""
+              }`}
+              onClick={handleFilterClick}
+            >
+              <Filter className="h-4 w-4" />
+              <span className="hidden sm:inline">Filters</span>
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {/* Main content area */}
-      <div className="flex flex-1 overflow-hidden mt-2">
+      <div className="flex flex-1 overflow-hidden">
         {/* Cards container - scrollable */}
         <div
           ref={scrollContainerRef}
-          className={`${
-            isFilterOpen ? "w-4/5" : "w-5/5"
-          } pr-4 overflow-y-auto max-h-[calc(100vh-200px)]`}
+          className={`flex-1 overflow-y-auto p-4 transition-all duration-300 ${
+            isFilterOpen || isExportOpen ? "md:w-3/4" : "w-full"
+          }`}
         >
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4 min-h-[600px]">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-4">
             {visibleAreas.map((area) => (
               <Card
                 key={area.id}
@@ -517,44 +556,36 @@ export default function AreasGrid({
           )}
 
           {/* End of results indicator */}
-          {!hasMore && filteredAreas.length > 4 && (
+          {!hasMore && filteredAreas.length > ITEMS_PER_PAGE && (
             <div className="flex justify-center items-center py-4 text-gray-500">
               No more areas to load
             </div>
           )}
         </div>
 
-        {/* Filter component - 25% width */}
-        <div
-          className={`${
-            isFilterOpen ? "w-1/5" : "w-0"
-          } pl-4 dark:border-gray-700`}
-        >
-          {isFilterOpen && (
+        {/* Side panels */}
+        {isFilterOpen && (
+          <div className="hidden md:block w-1/4 border-l dark:border-gray-700 p-4">
             <GridFilterComponent
               data={areas}
               setFilteredData={setAreasData}
               setShowFilter={setIsShowResetButton}
             />
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Export component - 25% width */}
-        <div
-          className={`${
-            isExportOpen ? "w-1/5" : "w-0"
-          } pl-4 dark:border-gray-700`}
-        >
-          {isExportOpen && (
+        {isExportOpen && (
+          <div className="hidden md:block w-1/4 border-l dark:border-gray-700 p-4">
             <GridExportComponent
               data={areas}
               setFilteredData={setAreasData}
               setIsExportOpen={setIsExportOpen}
             />
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
+      {/* Modal */}
       <Modal
         opened={opened}
         onClose={close}
@@ -564,6 +595,7 @@ export default function AreasGrid({
           backgroundOpacity: 0.55,
           blur: 3,
         }}
+        zIndex={9999}
       >
         <div className="pt-5 pb-14 px-5">{modalData.message}</div>
       </Modal>

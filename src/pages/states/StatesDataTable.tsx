@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import CommonDataTable from "@/components/common/CommonDataTable";
+// import CommonDataTable from "@/components/common/CommonDataTable";
+import FixedColumnDataTable from "@/components/common/FixedColumnDataTable";
 
 const mockStates = [
   {
@@ -429,11 +430,18 @@ export default function StatesDataTable({
   ];
 
   return (
-    <CommonDataTable
+    <FixedColumnDataTable
       columnData={mockStates}
       viewMode={viewMode}
       setViewMode={setViewMode}
       componentColumns={componentColumns}
+      fixedColumns={[]}
     />
+    // <CommonDataTable
+    //   columnData={mockStates}
+    //   viewMode={viewMode}
+    //   setViewMode={setViewMode}
+    //   componentColumns={componentColumns}
+    // />
   );
 }

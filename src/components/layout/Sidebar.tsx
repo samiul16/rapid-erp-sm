@@ -178,11 +178,11 @@ const Sidebar = () => {
           "absolute z-10 w-8 h-8 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-all",
           isRTL
             ? isCollapsed
-              ? "right-0 translate-x-1/12"
-              : "right-[6rem] translate-x-1/12"
+              ? "right-0 translate-x-1/32"
+              : "right-[6rem] translate-x-1/32"
             : isCollapsed
-            ? "left-0 -translate-x-1/12"
-            : "left-[6rem] -translate-x-1/12"
+            ? "left-0 -translate-x-1/32"
+            : "left-[6rem] -translate-x-1/32"
         )}
         style={{ top: "7%", transform: "translateY(-50%)" }}
       >
@@ -204,7 +204,7 @@ const Sidebar = () => {
         className={clsx(
           "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 h-[calc(100vh-4rem)]",
           isRTL ? "border-l" : "border-r",
-          isCollapsed ? "w-0 overflow-hidden" : "w-28"
+          isCollapsed ? "w-0 overflow-hidden" : "w-32"
         )}
       >
         {/* Top Fixed Menus */}
@@ -244,7 +244,7 @@ const Sidebar = () => {
 
         {/* Scrollable Middle Menus */}
         {!isCollapsed && (
-          <div className="flex-1 overflow-y-auto py-2 px-2">
+          <div className="flex-1 overflow-y-auto py-2 px-2 smooth-scroll scroll-smooth">
             {scrollableMenus.map(({ key, icon: Icon, label, path }) => (
               <button
                 key={key}

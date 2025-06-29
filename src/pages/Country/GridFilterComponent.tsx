@@ -79,7 +79,7 @@ export default function SimpleFilterComponent({
   };
 
   return (
-    <div className="w-72 h-[302px] flex flex-col border rounded-lg overflow-hidden">
+    <div className="w-72 h-[100vh] child flex flex-col border rounded-lg overflow-hidden">
       {/* Fixed Header */}
       <div className="border-b px-3 py-2 flex-shrink-0">
         <div className="flex items-center gap-2">

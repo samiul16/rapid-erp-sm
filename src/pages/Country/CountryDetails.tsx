@@ -1,24 +1,41 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Edit, FileText, Printer, History, Download } from "lucide-react";
+import { Trash2, Undo } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import YoutubeButton from "@/components/common/YoutubeButton";
 import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
+import { Autocomplete, Modal } from "@mantine/core";
+
+const MOCK_COUNTRIES = [
+  { code: "US", name: "United States", callingCode: "+1", flag: "🇺🇸" },
+  { code: "GB", name: "United Kingdom", callingCode: "+44", flag: "🇬🇧" },
+  { code: "AE", name: "United Arab Emirates", callingCode: "+971", flag: "🇦🇪" },
+  { code: "IN", name: "India", callingCode: "+91", flag: "🇮🇳" },
+];
+
+const COUNTRY_DATA = MOCK_COUNTRIES.map((country) => country.code);
 
 export default function CountryDetailsPage() {
   const { t } = useTranslation();
-  const [keepChanges, setKeepChanges] = useState(false);
   const navigate = useNavigate();
 
+  const [keepChanges, setKeepChanges] = useState(false);
+  const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState("US");
+
   const countryData = {
-    code: "US",
-    title: "United States",
+    code: selectedCountry,
+    callingCode:
+      MOCK_COUNTRIES.find((c) => c.code === selectedCountry)?.callingCode ||
+      "+1",
+    title:
+      MOCK_COUNTRIES.find((c) => c.code === selectedCountry)?.name ||
+      "United States",
     isDefault: true,
     isActive: true,
     isDraft: false,
     isDeleted: false,
-    rating: 4,
     flag: "https://flagcdn.com/us.svg",
     createdAt: "2023-05-15T10:30:00Z",
     updatedAt: "2023-11-20T14:45:00Z",
@@ -26,200 +43,299 @@ export default function CountryDetailsPage() {
     deletedAt: null,
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "--/--/----";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-GB");
+  const formatDate = (date: string | null) => {
+    if (!date) return "--/--/----";
+    const d = new Date(date);
+    const day = d.getDate();
+    const month = d.toLocaleString("default", { month: "short" });
+    const year = d.getFullYear();
+    return `${day} ${month} ${year}`;
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleExportPDF = () => {
-    console.log("Exporting to PDF...");
-  };
+  // const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   setSearchTerm(e.target.value);
+  //   setOpen(true); // Ensure dropdown stays open when typing
+  // };
+
+  // const handleSelect = (value: string) => {
+  //   const country = MOCK_COUNTRIES.find((c) => c.code === value);
+  //   setSelectedCountry(country?.code || "");
+  //   setSearchTerm(""); // Clear search term
+  //   setOpen(false);
+  // };
+
+  // Focus input when dropdown opens
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
+  // const handlePrint = () => window.print();
+  // const handleExportPDF = () => console.log("Exporting PDF...");
+  const handleDeleteRestore = () =>
+    console.log(countryData.isDeleted ? "Restoring..." : "Deleting...");
 
   return (
-    <div className="container mx-auto px-4 py-6 flex flex-col min-h-screen dark:bg-gray-900">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <div className="flex items-center gap-4">
-          <YoutubeButton videoId="PcVAyB3nDD4" />
-          <h1 className="text-2xl font-bold text-blue-400">
-            {t("button.viewingCountry")}
-          </h1>
+    <div className="relative w-[calc(100vw-150px)]">
+      {/* Container with full height minus external footer (80px assumed) */}
+      <div className="flex flex-col h-[82vh] overflow-hidden border rounded shadow bg-white dark:bg-gray-800 ">
+        {/* Header */}
+        <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 border-b px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <YoutubeButton videoId="PcVAyB3nDD4" />
+            <h1 className="text-xl font-bold text-blue-400">
+              {t("button.viewingCountry")}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="gap-2 bg-blue-400 hover:bg-blue-600 text-white rounded-full cursor-pointer"
+              onClick={() => navigate("/countries")}
+            >
+              {t("button.list")}
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto justify-end">
-          <Button
-            variant="outline"
-            className="gap-2 hover:bg-blue-600 hover:text-white cursor-pointer"
-            onClick={() => navigate("/countries/1/edit")}
-          >
-            <Edit className="h-4 w-4" />
-            {t("button.edit")}
-          </Button>
-        </div>
-      </div>
 
-      {/* Main content */}
-      <div className="flex-1">
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6 dark:bg-gray-800 dark:border-gray-700">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {/* Flag */}
-            <div>
-              <h3 className="font-medium mb-1">Flag</h3>
-              <div className="w-16 h-12 border rounded-md bg-gray-100 overflow-hidden">
-                <img
-                  src={countryData.flag}
-                  alt="Flag"
-                  className="object-cover w-full h-full"
+        {/* Scrollable Form Section */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+          {/* Row 1 */}
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-3">
+              <h3 className="font-medium mb-1">Code</h3>
+              <Autocomplete
+                data={COUNTRY_DATA}
+                value={selectedCountry}
+                onChange={setSelectedCountry}
+                placeholder="Select a country..."
+                display="name"
+                disabled={false}
+                className="w-full"
+              />
+              {/* <Command className="rounded-lg border overflow-hidden">
+                <CommandInput
+                  placeholder="Type to search..."
+                  value={searchTerm}
+                  onValueChange={(value) => {
+                    setSearchTerm(value);
+                    setOpen(true);
+                  }}
                 />
+                <CommandList>
+                  {filteredCountries.length > 0 ? (
+                    filteredCountries.map((country) => (
+                      <CommandItem
+                        key={country.code}
+                        value={country.code}
+                        onSelect={() => {
+                          setSelectedCountry(country.code);
+                          setSearchTerm("");
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>{country.flag}</span>
+                          <span>{country.code}</span>
+                          <span className="text-muted-foreground ml-2">
+                            {country.name}
+                          </span>
+                        </div>
+                      </CommandItem>
+                    ))
+                  ) : (
+                    <div className="py-2 px-4 text-sm text-muted-foreground">
+                      No countries found
+                    </div>
+                  )}
+                </CommandList>
+              </Command> */}
+            </div>
+            <div className="md:col-span-3">
+              <h3 className="font-medium mb-1">Calling Code</h3>
+              <div className="w-full px-3 py-2 dark:bg-gray-700 dark:border-gray-600">
+                {countryData.callingCode}
+              </div>
+            </div>
+            <div className="md:col-span-5">
+              <div className="flex justify-between items-center mb-1">
+                <h3 className="font-medium">Country</h3>
+              </div>
+              <div className="w-full px-3 py-2 dark:bg-gray-700 dark:border-gray-600">
+                {countryData.title}
               </div>
             </div>
 
-            {/* Code and Title */}
-            <div>
-              <h3 className="font-medium mb-1">Code</h3>
-              <input
-                type="text"
-                value={countryData.code}
-                readOnly
-                className="border rounded px-3 py-1.5 w-full"
+            <div className="md:col-span-1 flex  justify-end">
+              <Button
+                variant="outline"
+                className="gap-2 bg-blue-400 hover:bg-blue-600 text-white rounded-full cursor-pointer"
+                onClick={() => navigate("/countries/1/edit")}
+              >
+                {t("button.edit")}
+              </Button>
+            </div>
+          </div>
+
+          {/* Row 2 */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            {/* Default Switch */}
+            <div className="md:col-span-3">
+              <h3 className="font-medium mb-1">Default</h3>
+              <Switch
+                checked={countryData.isDefault}
+                disabled
+                className={`data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-600`}
               />
             </div>
 
-            <div>
-              <h3 className="font-medium mb-1">Country</h3>
-              <p className="text-gray-700 dark:text-gray-200">
-                {countryData.title}
-              </p>
+            {/* Active Switch */}
+            <div className="md:col-span-3">
+              <h3 className="font-medium mb-1">Active</h3>
+              <Switch
+                checked={countryData.isActive}
+                disabled
+                className={`data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-600`}
+              />
             </div>
 
-            {/* <div>
-              <h3 className="font-medium mb-1">Rating</h3>
-              {renderStars(countryData.rating)}
-            </div> */}
-
-            {/* Toggles in one line */}
-            <div className="col-span-full grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-              <div className="flex items-center gap-3">
-                <div>
-                  <h3 className="font-medium mb-1">Active</h3>
-                  <Switch
-                    checked={countryData.isActive}
-                    disabled
-                    className="data-[state=checked]:bg-blue-400"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div>
-                  <h3 className="font-medium mb-1">Draft</h3>
-                  <Switch
-                    checked={countryData.isDraft}
-                    disabled
-                    className="data-[state=checked]:bg-blue-400"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div>
-                  <h3 className="font-medium mb-1">Delete</h3>
-                  <Switch
-                    checked={countryData.isDeleted}
-                    disabled
-                    className="data-[state=checked]:bg-blue-400"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div>
-                  <h3 className="font-medium mb-1">Default</h3>
-                  <Switch
-                    checked={countryData.isDefault}
-                    disabled
-                    className="data-[state=checked]:bg-blue-400"
-                  />
-                </div>
-              </div>
+            {/* Draft Switch */}
+            <div className="md:col-span-3">
+              <h3 className="font-medium mb-1">Draft</h3>
+              <Switch
+                checked={countryData.isDraft}
+                disabled
+                className={`data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-600`}
+              />
             </div>
 
-            {/* Dates */}
-            <div>
+            {/* Delete/Restore Button */}
+            <div className="md:col-span-3">
+              <h3 className="font-medium mb-1">
+                {countryData.isDeleted ? "Restore" : "Delete"}
+              </h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDeleteRestore}
+                disabled={countryData.isDeleted}
+                className="disabled:cursor-not-allowed"
+              >
+                {countryData.isDeleted ? (
+                  <Undo size={20} className="text-blue-500" />
+                ) : (
+                  <Trash2 size={20} className="text-red-600" />
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Row 3 */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-3">
               <h3 className="font-medium mb-1">Created</h3>
               <p>{formatDate(countryData.createdAt)}</p>
             </div>
-
-            <div>
+            <div className="md:col-span-3">
               <h3 className="font-medium mb-1">Updated</h3>
               <p>{formatDate(countryData.updatedAt)}</p>
             </div>
-
-            <div>
+            <div className="md:col-span-3">
               <h3 className="font-medium mb-1">Drafted</h3>
               <p>{formatDate(countryData.draftedAt)}</p>
             </div>
-
-            <div>
+            <div className="md:col-span-3">
               <h3 className="font-medium mb-1">Deleted</h3>
               <p>{formatDate(countryData.deletedAt)}</p>
             </div>
           </div>
+
+          {/* Flag */}
+          <div>
+            <h3 className="font-medium mb-1">Flag</h3>
+            <div className="w-32 h-20 border rounded-md bg-gray-100 overflow-hidden dark:bg-gray-700">
+              <img
+                src={countryData.flag}
+                alt="Flag"
+                className="object-cover w-full h-full"
+              />
+            </div>
+          </div>
+          <div>
+            <h3 className="font-medium mb-1">Flag</h3>
+            <div className="w-32 h-20 border rounded-md bg-gray-100 overflow-hidden dark:bg-gray-700">
+              <img
+                src={countryData.flag}
+                alt="Flag"
+                className="object-cover w-full h-full"
+              />
+            </div>
+          </div>
+          <div>
+            <h3 className="font-medium mb-1">Flag</h3>
+            <div className="w-32 h-20 border rounded-md bg-gray-100 overflow-hidden dark:bg-gray-700">
+              <img
+                src={countryData.flag}
+                alt="Flag"
+                className="object-cover w-full h-full"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Fixed Bottom Button Bar */}
+        <div className="sticky bottom-0 z-30 bg-white dark:bg-gray-800 border-t px-6 py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex gap-6 items-center">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={keepChanges}
+                  className="data-[state=checked]:bg-blue-400"
+                  onCheckedChange={setKeepChanges}
+                />
+                <span className="dark:text-gray-200">{t("button.keep")}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch className="data-[state=checked]:bg-blue-400" />
+                <span className="dark:text-gray-200">PDF</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch className="data-[state=checked]:bg-blue-400" />
+                <span className="dark:text-gray-200">Print</span>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                className="gap-2 text-white bg-blue-400 hover:bg-blue-600 rounded-full cursor-pointer"
+              >
+                <span className="hidden sm:inline">History</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2 text-white bg-blue-400 hover:bg-blue-600 rounded-full cursor-pointer"
+              >
+                <span className="hidden sm:inline">Export</span>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="sticky bottom-0 bg-white border py-4 px-6 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-        <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={keepChanges}
-              className="data-[state=checked]:bg-blue-400"
-              onCheckedChange={setKeepChanges}
-              aria-label={t("button.keepChanges")}
-            />
-            <span>{t("button.keepChanges")}</span>
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 cursor-pointer text-white bg-blue-400 hover:bg-blue-600 hover:text-white"
-              onClick={handleExportPDF}
-            >
-              <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">PDF</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 cursor-pointer text-white bg-blue-400 hover:bg-blue-600 hover:text-white"
-              onClick={handlePrint}
-            >
-              <Printer className="h-4 w-4" />
-              <span className="hidden sm:inline">Print</span>
-            </Button>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 cursor-pointer text-white bg-blue-400 hover:bg-blue-600 hover:text-white"
-            >
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Export</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 cursor-pointer text-white bg-blue-400 hover:bg-blue-600 hover:text-white"
-            >
-              <History className="h-4 w-4" />
-              <span className="hidden sm:inline">History</span>
-            </Button>
-          </div>
-        </div>
-      </div>
+      {/* Modal */}
+      <Modal
+        opened={isOptionModalOpen}
+        onClose={() => setIsOptionModalOpen(false)}
+        title="Options"
+        size="xl"
+        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
+      >
+        <div className="pt-5 pb-14 px-5">Modal Content</div>
+      </Modal>
     </div>
   );
 }

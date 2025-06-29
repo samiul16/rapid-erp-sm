@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Trash2, Undo2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import YoutubeButton from "@/components/common/YoutubeButton";
 import EditableInput from "@/components/common/EditableInput";
 import { useNavigate } from "react-router-dom";
+import { Modal } from "@mantine/core";
+import { formatDate } from "@/lib/utils";
 
 type CountryData = {
   code: string;
@@ -16,9 +18,12 @@ type CountryData = {
   isDraft: boolean;
   rating: number;
   flag: string | null;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date | null;
+  draftedAt: Date | null;
+  updatedAt: Date | null;
+  deletedAt: Date | null;
   callingCode: string;
+  isDeleted: boolean;
 };
 
 type Props = {
@@ -33,22 +38,26 @@ const initialData: CountryData = {
   isDraft: false,
   rating: 3,
   flag: null,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
+  createdAt: new Date(),
+  draftedAt: null,
+  updatedAt: new Date(),
+  deletedAt: null,
   callingCode: "+971",
+  isDeleted: false,
 };
 
 export default function CountryFormPage({ isEdit = false }: Props) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [keepCreating, setKeepCreating] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const navigate = useNavigate();
+  const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
 
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CountryData>({
     code: "",
     title: "",
     isDefault: false,
@@ -56,9 +65,12 @@ export default function CountryFormPage({ isEdit = false }: Props) {
     isDraft: false,
     rating: 3,
     flag: null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: null,
+    draftedAt: null,
+    updatedAt: null,
+    deletedAt: null,
     callingCode: "",
+    isDeleted: false,
   });
 
   // Initialize with edit data if available
@@ -99,27 +111,27 @@ export default function CountryFormPage({ isEdit = false }: Props) {
 
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
-      handleImageFile();
+      handleImageFile(files[0]);
     }
   };
 
   // Handle image file selection
-  const handleImageFile = () => {
-    // if (file.type.match('image.*')) {
-    //   const reader = new FileReader();
-    //   reader.onload = (e) => {
-    //     setImagePreview(e.target?.result as string);
-    //     setFormData({ ...formData, flag: e.target?.result as string });
-    //   };
-    //   reader.readAsDataURL(file);
-    // }
+  const handleImageFile = (file: File) => {
+    if (file.type.match("image.*")) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+        setFormData({ ...formData, flag: e.target?.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // Handle image upload via file input
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      handleImageFile();
+      handleImageFile(file);
     }
   };
 
@@ -149,9 +161,12 @@ export default function CountryFormPage({ isEdit = false }: Props) {
         isDraft: false,
         rating: 3,
         flag: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: new Date(),
+        draftedAt: null,
+        updatedAt: new Date(),
+        deletedAt: null,
         callingCode: "",
+        isDeleted: false,
       });
       setImagePreview(null);
       if (formRef.current) {
@@ -166,173 +181,193 @@ export default function CountryFormPage({ isEdit = false }: Props) {
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* Fixed Header */}
-      <div className="sticky top-0 z-10 bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-        <div className="container mx-auto px-4 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-4">
-            <div className="flex gap-2 items-center">
-              <YoutubeButton videoId="your-video-id" />
-              <h1 className="text-xl font-bold text-blue-400">
-                {isEdit ? t("form.editingCountry") : t("form.creatingCountry")}
-              </h1>
-            </div>
-            <div className="flex justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 p-5 bg-blue-400 hover:bg-blue-600 text-white cursor-pointer rounded-full"
-                onClick={() => navigate("/countries")}
-              >
-                {t("button.list")}
-              </Button>
-            </div>
+    <div className="relative w-[calc(100vw-150px)]">
+      {/* Container with full height minus external footer */}
+      <div className="flex flex-col h-[82vh] overflow-hidden border rounded shadow bg-white dark:bg-gray-800">
+        {/* Header */}
+        <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 border-b px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <YoutubeButton videoId="PcVAyB3nDD4" />
+            <h1 className="text-xl font-bold text-blue-400">
+              {isEdit ? t("form.editingCountry") : t("form.creatingCountry")}
+            </h1>
           </div>
-        </div>
-      </div>
-
-      {/* Scrollable Main Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div
-          className="container mx-auto px-4 py-6"
-          dir={i18n.language === "ar" ? "rtl" : "ltr"}
-        >
-          <form
-            ref={formRef}
-            onSubmit={handleSubmit}
-            className="bg-white rounded-lg shadow-sm border p-6 mb-6 dark:bg-gray-800 dark:border-gray-700"
+          <Button
+            variant="outline"
+            className="gap-2 bg-blue-400 hover:bg-blue-600 text-white rounded-full"
+            onClick={() => navigate("/countries")}
           >
-            {/* First Row: Code, Country, Default */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 items-end">
-              {/* Country Code - 3 columns */}
-              <div className="md:col-span-3 space-y-1">
-                <Label htmlFor="code">{t("form.countryCode")}</Label>
+            {t("button.list")}
+          </Button>
+        </div>
+
+        {/* Scrollable Form Section */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+          <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
+            {/* First Row: Code, Calling Code, Country */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+              <div className="md:col-span-3 space-y-2">
+                <Label htmlFor="code" className="block">
+                  {t("form.code")}
+                </Label>
                 <EditableInput
                   id="code"
                   name="code"
-                  className="h-10"
+                  className="w-full h-10"
                   value={formData.code}
                   onChange={handleChange}
-                  onNext={() => {
-                    document.getElementById("title")?.focus();
-                  }}
-                  onCancel={() => {
-                    setFormData({ ...formData, code: "" });
-                  }}
                   placeholder="US"
                   maxLength={3}
+                  onNext={() => setIsOptionModalOpen(true)}
+                  onCancel={() => setIsOptionModalOpen(false)}
                   required
                 />
               </div>
-              <div className="md:col-span-3 flex items-center gap-4">
-                <div className="md:col-span-3 space-y-2">
-                  <Label htmlFor="callingCode">{t("form.callingCode")}</Label>
-                  <EditableInput
-                    id="callingCode"
-                    name="callingCode"
-                    className="h-10"
-                    value={formData.callingCode}
-                    onChange={handleChange}
-                    onNext={() => {
-                      document.getElementById("title")?.focus();
-                    }}
-                    onCancel={() => {
-                      setFormData({ ...formData, code: "" });
-                    }}
-                    placeholder="US"
-                    maxLength={3}
-                    required
+
+              <div className="md:col-span-3 space-y-2">
+                <Label htmlFor="callingCode" className="block">
+                  {t("form.callingCode")}
+                </Label>
+                <EditableInput
+                  id="callingCode"
+                  name="callingCode"
+                  className="w-full h-10"
+                  value={formData.callingCode}
+                  onChange={handleChange}
+                  placeholder="+1"
+                  onNext={() => setIsOptionModalOpen(true)}
+                  onCancel={() => setIsOptionModalOpen(false)}
+                  required
+                />
+              </div>
+
+              <div className="md:col-span-6 space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="title" className="block">
+                    {t("form.country")}
+                  </Label>
+                  <MoreVertical
+                    className="h-4 w-4 cursor-pointer"
+                    onClick={() => setIsOptionModalOpen(true)}
                   />
                 </div>
-              </div>
-              {/* Country Name - 6 columns */}
-              <div className="md:col-span-6 space-y-2">
-                <Label htmlFor="title">{t("form.countryName")}</Label>
                 <EditableInput
                   id="title"
                   name="title"
-                  className="h-10"
+                  className="w-full h-10"
                   value={formData.title}
                   onChange={handleChange}
-                  onNext={() => {
-                    document.getElementById("isActive")?.focus();
-                  }}
-                  onCancel={() => {
-                    setFormData({ ...formData, title: "" });
-                  }}
                   placeholder={t("form.countryNamePlaceholder")}
+                  onNext={() => setIsOptionModalOpen(true)}
+                  onCancel={() => setIsOptionModalOpen(false)}
                   required
                 />
               </div>
             </div>
 
-            {/* Second Row: Active, Draft, Delete, Rating */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 items-center">
-              {/* Active Switch - 3 columns */}
-              <div className="md:col-span-3 flex items-center gap-4">
-                <Label htmlFor="isActive" className="whitespace-nowrap">
-                  {t("common.active")}
-                </Label>
-                <Switch
-                  id="isActive"
-                  name="isActive"
-                  className="data-[state=checked]:bg-blue-400"
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isActive: checked })
-                  }
-                />
-              </div>
-
-              {/* Draft Switch - 3 columns */}
-              <div className="md:col-span-3 flex items-center gap-4">
-                <Label htmlFor="isDraft" className="whitespace-nowrap">
-                  {t("common.draft")}
-                </Label>
-                <Switch
-                  id="isDraft"
-                  name="isDraft"
-                  className="data-[state=checked]:bg-blue-400"
-                  checked={formData.isDraft}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDraft: checked })
-                  }
-                />
-              </div>
-
-              {/* Delete Button - 3 columns (only in edit mode) */}
-              <div className="md:col-span-3 flex items-center gap-4">
-                <Label htmlFor="isDeleted" className="whitespace-nowrap">
-                  {t("button.delete")}
-                </Label>
-                <Switch
-                  id="isDeleted"
-                  name="isDeleted"
-                  className="data-[state=checked]:bg-blue-400"
-                  onCheckedChange={() => setFormData({ ...formData })}
-                />
-              </div>
-
-              {/* Default Switch - 3 columns */}
-              <div className="md:col-span-3 flex items-center gap-4">
-                <Label htmlFor="isDefault" className="whitespace-nowrap">
+            {/* Second Row: Default, Draft, Active, Delete */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+              <div className="md:col-span-3 space-y-2">
+                <Label htmlFor="isDefault" className="block">
                   {t("common.default")}
                 </Label>
-                <Switch
-                  id="isDefault"
-                  name="isDefault"
-                  className="data-[state=checked]:bg-blue-400"
-                  checked={formData.isDefault}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDefault: checked })
-                  }
-                />
+                <div className="h-10 flex items-center">
+                  <Switch
+                    id="isDefault"
+                    name="isDefault"
+                    className="data-[state=checked]:bg-blue-400"
+                    checked={formData.isDefault}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, isDefault: checked })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="md:col-span-3 space-y-2">
+                <Label htmlFor="isDraft" className="block">
+                  {t("common.draft")}
+                </Label>
+                <div className="h-10 flex items-center">
+                  <Switch
+                    id="isDraft"
+                    name="isDraft"
+                    className="data-[state=checked]:bg-blue-400"
+                    checked={formData.isDraft}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, isDraft: checked })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="md:col-span-3 space-y-2">
+                <Label htmlFor="isActive" className="block">
+                  {t("common.active")}
+                </Label>
+                <div className="h-10 flex items-center">
+                  <Switch
+                    id="isActive"
+                    name="isActive"
+                    className="data-[state=checked]:bg-blue-400"
+                    checked={formData.isActive}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, isActive: checked })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="md:col-span-3 space-y-2">
+                <Label className="block">
+                  {formData.isDeleted
+                    ? t("button.restore")
+                    : t("button.delete")}
+                </Label>
+                <div className="h-10 flex items-center">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        isDeleted: !formData.isDeleted,
+                      })
+                    }
+                  >
+                    {formData.isDeleted ? (
+                      <Undo2 className="text-green-500" />
+                    ) : (
+                      <Trash2 className="text-red-500" />
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
 
-            {/* Third Row: Flag Image Upload with Drag and Drop - Full width */}
-            <div className="grid grid-cols-1 gap-4">
-              <Label>{t("form.countryFlag")}</Label>
+            {/* Third Row: Dates */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-3">
+                <h3 className="font-medium mb-1">Created</h3>
+                <p>{formatDate(new Date())}</p>
+              </div>
+              <div className="md:col-span-3">
+                <h3 className="font-medium mb-1">Updated</h3>
+                <p>{formatDate(new Date())}</p>
+              </div>
+              <div className="md:col-span-3">
+                <h3 className="font-medium mb-1">Drafted</h3>
+                <p>{formatDate(new Date())}</p>
+              </div>
+              <div className="md:col-span-3">
+                <h3 className="font-medium mb-1">Deleted</h3>
+                <p>{formatDate(new Date())}</p>
+              </div>
+            </div>
+
+            {/* Flag Upload */}
+            <div className="space-y-2">
+              <Label className="block">{t("form.flag")}</Label>
               <div
                 className={`border-2 border-dashed rounded-lg p-6 text-center ${
                   isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
@@ -376,246 +411,6 @@ export default function CountryFormPage({ isEdit = false }: Props) {
                 )}
                 <input
                   ref={fileInputRef}
-                  id="flag"
-                  name="flag"
-                  type="file"
-                  onChange={handleImageChange}
-                  accept="image/*"
-                  className="hidden"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 items-center">
-              {/* Active Switch - 3 columns */}
-              <div className="md:col-span-3 flex items-center gap-4">
-                <Label htmlFor="isActive" className="whitespace-nowrap">
-                  {t("common.active")}
-                </Label>
-                <Switch
-                  id="isActive"
-                  name="isActive"
-                  className="data-[state=checked]:bg-blue-400"
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isActive: checked })
-                  }
-                />
-              </div>
-
-              {/* Draft Switch - 3 columns */}
-              <div className="md:col-span-3 flex items-center gap-4">
-                <Label htmlFor="isDraft" className="whitespace-nowrap">
-                  {t("common.draft")}
-                </Label>
-                <Switch
-                  id="isDraft"
-                  name="isDraft"
-                  className="data-[state=checked]:bg-blue-400"
-                  checked={formData.isDraft}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDraft: checked })
-                  }
-                />
-              </div>
-
-              {/* Delete Button - 3 columns (only in edit mode) */}
-              <div className="md:col-span-3 flex items-center gap-4">
-                <Label htmlFor="isDeleted" className="whitespace-nowrap">
-                  {t("button.delete")}
-                </Label>
-                <Switch
-                  id="isDeleted"
-                  name="isDeleted"
-                  className="data-[state=checked]:bg-blue-400"
-                  onCheckedChange={() => setFormData({ ...formData })}
-                />
-              </div>
-
-              {/* Default Switch - 3 columns */}
-              <div className="md:col-span-3 flex items-center gap-4">
-                <Label htmlFor="isDefault" className="whitespace-nowrap">
-                  {t("common.default")}
-                </Label>
-                <Switch
-                  id="isDefault"
-                  name="isDefault"
-                  className="data-[state=checked]:bg-blue-400"
-                  checked={formData.isDefault}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDefault: checked })
-                  }
-                />
-              </div>
-            </div>
-
-            {/* Third Row: Flag Image Upload with Drag and Drop - Full width */}
-            <div className="grid grid-cols-1 gap-4">
-              <Label>{t("form.countryFlag")}</Label>
-              <div
-                className={`border-2 border-dashed rounded-lg p-6 text-center ${
-                  isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
-                }`}
-                onDragEnter={handleDragEnter}
-                onDragLeave={handleDragLeave}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                onClick={triggerFileInput}
-              >
-                {imagePreview ? (
-                  <div className="relative inline-block">
-                    <img
-                      src={imagePreview}
-                      alt={t("form.flagPreview")}
-                      className="w-40 h-28 object-contain rounded-md"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white shadow-sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setImagePreview(null);
-                        setFormData({ ...formData, flag: null });
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <Upload className="h-8 w-8 text-gray-400" />
-                    <p className="text-sm text-gray-500">
-                      {t("form.dragDropImage")}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {t("form.orClickToSelect")}
-                    </p>
-                  </div>
-                )}
-                <input
-                  ref={fileInputRef}
-                  id="flag"
-                  name="flag"
-                  type="file"
-                  onChange={handleImageChange}
-                  accept="image/*"
-                  className="hidden"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 items-center">
-              {/* Active Switch - 3 columns */}
-              <div className="md:col-span-3 flex items-center gap-4">
-                <Label htmlFor="isActive" className="whitespace-nowrap">
-                  {t("common.active")}
-                </Label>
-                <Switch
-                  id="isActive"
-                  name="isActive"
-                  className="data-[state=checked]:bg-blue-400"
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isActive: checked })
-                  }
-                />
-              </div>
-
-              {/* Draft Switch - 3 columns */}
-              <div className="md:col-span-3 flex items-center gap-4">
-                <Label htmlFor="isDraft" className="whitespace-nowrap">
-                  {t("common.draft")}
-                </Label>
-                <Switch
-                  id="isDraft"
-                  name="isDraft"
-                  className="data-[state=checked]:bg-blue-400"
-                  checked={formData.isDraft}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDraft: checked })
-                  }
-                />
-              </div>
-
-              {/* Delete Button - 3 columns (only in edit mode) */}
-              <div className="md:col-span-3 flex items-center gap-4">
-                <Label htmlFor="isDeleted" className="whitespace-nowrap">
-                  {t("button.delete")}
-                </Label>
-                <Switch
-                  id="isDeleted"
-                  name="isDeleted"
-                  className="data-[state=checked]:bg-blue-400"
-                  onCheckedChange={() => setFormData({ ...formData })}
-                />
-              </div>
-
-              {/* Default Switch - 3 columns */}
-              <div className="md:col-span-3 flex items-center gap-4">
-                <Label htmlFor="isDefault" className="whitespace-nowrap">
-                  {t("common.default")}
-                </Label>
-                <Switch
-                  id="isDefault"
-                  name="isDefault"
-                  className="data-[state=checked]:bg-blue-400"
-                  checked={formData.isDefault}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDefault: checked })
-                  }
-                />
-              </div>
-            </div>
-
-            {/* Third Row: Flag Image Upload with Drag and Drop - Full width */}
-            <div className="grid grid-cols-1 gap-4">
-              <Label>{t("form.countryFlag")}</Label>
-              <div
-                className={`border-2 border-dashed rounded-lg p-6 text-center ${
-                  isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
-                }`}
-                onDragEnter={handleDragEnter}
-                onDragLeave={handleDragLeave}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                onClick={triggerFileInput}
-              >
-                {imagePreview ? (
-                  <div className="relative inline-block">
-                    <img
-                      src={imagePreview}
-                      alt={t("form.flagPreview")}
-                      className="w-40 h-28 object-contain rounded-md"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white shadow-sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setImagePreview(null);
-                        setFormData({ ...formData, flag: null });
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <Upload className="h-8 w-8 text-gray-400" />
-                    <p className="text-sm text-gray-500">
-                      {t("form.dragDropImage")}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {t("form.orClickToSelect")}
-                    </p>
-                  </div>
-                )}
-                <input
-                  ref={fileInputRef}
-                  id="flag"
-                  name="flag"
                   type="file"
                   onChange={handleImageChange}
                   accept="image/*"
@@ -625,64 +420,61 @@ export default function CountryFormPage({ isEdit = false }: Props) {
             </div>
           </form>
         </div>
-      </div>
 
-      {/* Fixed Footer */}
-      <div className="sticky bottom-0 bg-white border-t py-4 px-6 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-        <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <Switch
-                id="keepCreating"
-                checked={keepCreating}
-                className="data-[state=checked]:bg-blue-400"
-                onCheckedChange={(checked) => setKeepCreating(!!checked)}
-              />
-              <Label
-                htmlFor="keepCreating"
-                className="cursor-pointer whitespace-nowrap"
+        {/* Fixed Bottom Button Bar */}
+        <div className="sticky bottom-0 z-30 bg-white dark:bg-gray-800 border-t px-6 py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex gap-6 items-center">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={keepCreating}
+                  className="data-[state=checked]:bg-blue-400"
+                  onCheckedChange={setKeepCreating}
+                />
+                <span className="dark:text-gray-200">
+                  {t("button.keepCreating")}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch className="data-[state=checked]:bg-blue-400" />
+                <span className="dark:text-gray-200">PDF</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch className="data-[state=checked]:bg-blue-400" />
+                <span className="dark:text-gray-200">Print</span>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                className="gap-2 text-white bg-blue-400 hover:bg-blue-600 rounded-full"
+                onClick={handleReset}
               >
-                {isEdit ? t("button.keep") : t("button.keep")}
-              </Label>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Switch id="print" className="data-[state=checked]:bg-blue-400" />
-              <Label
-                htmlFor="print"
-                className="cursor-pointer whitespace-nowrap"
+                {t("button.reset")}
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2 text-white bg-blue-400 hover:bg-blue-600 rounded-full"
+                onClick={() => formRef.current?.requestSubmit()}
               >
-                {t("button.print")}
-              </Label>
+                {t("button.submit")}
+              </Button>
             </div>
-
-            <div className="flex items-center gap-2">
-              <Switch id="pdf" className="data-[state=checked]:bg-blue-400" />
-              <Label htmlFor="pdf" className="cursor-pointer whitespace-nowrap">
-                {t("button.pdf")}
-              </Label>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-4">
-            <Button
-              variant="outline"
-              onClick={handleReset}
-              type="button"
-              className="rounded-full"
-            >
-              {t("button.reset")}
-            </Button>
-            <Button
-              type="submit"
-              className="bg-blue-400 hover:bg-blue-600 text-white rounded-full"
-              onClick={() => formRef.current?.requestSubmit()}
-            >
-              {t("button.submit")}
-            </Button>
           </div>
         </div>
       </div>
+
+      {/* Modal */}
+      <Modal
+        opened={isOptionModalOpen}
+        onClose={() => setIsOptionModalOpen(false)}
+        title="Options"
+        size="xl"
+        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
+      >
+        <div className="pt-5 pb-14 px-5">Modal Content</div>
+      </Modal>
     </div>
   );
 }

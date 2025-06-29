@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Define the type for the column configuration
+// types/table.d.ts or anywhere globally accessible
+
 export type TTableColumnConfig = {
   accessorKey: string;
   cell: (info: {

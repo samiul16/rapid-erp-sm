@@ -19,6 +19,7 @@ export default function CitiesPage() {
     active: 28,
     inactive: 4,
     deleted: 0,
+    updated: 0,
   };
 
   // YouTube video ID (the part after 'v=' in the URL)
