@@ -345,17 +345,17 @@ export default function CountryDetailsPage() {
       <Modal
         opened={isOptionModalOpen}
         onClose={() => setIsOptionModalOpen(false)}
-        size="70%"
+        size="50%"
         overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
         withCloseButton={false}
         styles={{
           body: {
-            height: "600px", // Fixed height in pixels
+            height: "720px", // Fixed height in pixels
             overflow: "hidden",
             padding: 4,
           },
           content: {
-            height: "80vh", // Fixed height - 80% of viewport height
+            // height: "80vh", // Fixed height - 80% of viewport height
             display: "flex",
             flexDirection: "column",
           },

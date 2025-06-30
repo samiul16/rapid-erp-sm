@@ -622,7 +622,11 @@ export default function CommonDataTable({
           {/* Table with scrollable body */}
           <div
             ref={tableContainerRef}
-            className="flex-1 overflow-auto scroll-smooth smooth-scroll focus:outline-none border border-gray-200 rounded-lg min-h-0"
+            className={`flex-1 scroll-smooth smooth-scroll focus:outline-none border border-gray-200 rounded-lg min-h-0 ${
+              pagination.pageSize === 10
+                ? "overflow-x-auto overflow-y-hidden"
+                : "overflow-auto"
+            }`}
             tabIndex={0}
             style={{
               height: "calc(100vh - 200px)", // Adjust based on your footer height and other elements
@@ -1302,7 +1306,7 @@ function PaginationControls({ table }: { table: any }) {
             }
             size="sm"
             onClick={() => table.setPageSize(Number(pageSize))}
-            className={`min-w-[40px] ${
+            className={`min-w-[40px] cursor-pointer ${
               table.getState().pagination.pageSize === pageSize
                 ? "bg-blue-500 text-white hover:bg-blue-600"
                 : "bg-white text-blue-500 border-blue-500 hover:bg-blue-50"
@@ -1339,7 +1343,7 @@ function PaginationControls({ table }: { table: any }) {
                   }
                   size="sm"
                   onClick={() => table.setPageSize(Number(pageSize))}
-                  className={`min-w-[40px] ${
+                  className={`min-w-[40px] cursor-pointer ${
                     table.getState().pagination.pageSize === pageSize
                       ? "bg-blue-500 text-white hover:bg-blue-600"
                       : "bg-white text-blue-500 border-blue-500 hover:bg-blue-50"

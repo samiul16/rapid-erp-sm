@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Upload, X, Trash2, Undo2, MoreVertical } from "lucide-react";
+import { Upload, X, Trash2, Undo2, MoreVertical, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import YoutubeButton from "@/components/common/YoutubeButton";
 import EditableInput from "@/components/common/EditableInput";
@@ -188,7 +187,7 @@ export default function CountryFormPage({ isEdit = false }: Props) {
         <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 border-b px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <YoutubeButton videoId="PcVAyB3nDD4" />
-            <h1 className="text-xl font-bold">
+            <h1 className="text-xl font-bold text-blue-300">
               {isEdit ? t("form.editingCountry") : t("form.creatingCountry")}
             </h1>
           </div>
@@ -205,11 +204,9 @@ export default function CountryFormPage({ isEdit = false }: Props) {
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
           <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
             {/* First Row: Code, Calling Code, Country */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
               <div className="md:col-span-3 space-y-2">
-                <Label htmlFor="code" className="block">
-                  {t("form.code")}
-                </Label>
+                <h3 className="font-medium mb-1">{t("form.code")}</h3>
                 <EditableInput
                   id="code"
                   name="code"
@@ -225,9 +222,7 @@ export default function CountryFormPage({ isEdit = false }: Props) {
               </div>
 
               <div className="md:col-span-3 space-y-2">
-                <Label htmlFor="callingCode" className="block">
-                  {t("form.callingCode")}
-                </Label>
+                <h3 className="font-medium mb-1">{t("form.callingCode")}</h3>
                 <EditableInput
                   id="callingCode"
                   name="callingCode"
@@ -241,11 +236,9 @@ export default function CountryFormPage({ isEdit = false }: Props) {
                 />
               </div>
 
-              <div className="md:col-span-6 space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="title" className="block">
-                    {t("form.country")}
-                  </Label>
+              <div className="md:col-span-5 space-y-2">
+                <div className="flex justify-between items-center mb-1">
+                  <h3 className="font-medium">{t("form.country")}</h3>
                   <MoreVertical
                     className="h-4 w-4 cursor-pointer"
                     onClick={() => setIsOptionModalOpen(true)}
@@ -263,14 +256,21 @@ export default function CountryFormPage({ isEdit = false }: Props) {
                   required
                 />
               </div>
+              <div className="md:col-span-1 flex  justify-end">
+                <Button
+                  variant="outline"
+                  className="gap-2 hover:bg-blue-500 hover:text-white rounded-full cursor-pointer"
+                  onClick={() => navigate("/countries/1")}
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             {/* Second Row: Default, Draft, Active, Delete */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
               <div className="md:col-span-3 space-y-2">
-                <Label htmlFor="isDefault" className="block">
-                  {t("common.default")}
-                </Label>
+                <h3 className="font-medium mb-1">{t("common.default")}</h3>
                 <div className="h-10 flex items-center">
                   <Switch
                     id="isDefault"
@@ -285,9 +285,7 @@ export default function CountryFormPage({ isEdit = false }: Props) {
               </div>
 
               <div className="md:col-span-3 space-y-2">
-                <Label htmlFor="isActive" className="block">
-                  {t("common.active")}
-                </Label>
+                <h3 className="font-medium mb-1">{t("common.active")}</h3>
                 <div className="h-10 flex items-center">
                   <Switch
                     id="isActive"
@@ -302,9 +300,7 @@ export default function CountryFormPage({ isEdit = false }: Props) {
               </div>
 
               <div className="md:col-span-3 space-y-2">
-                <Label htmlFor="isDraft" className="block">
-                  {t("common.draft")}
-                </Label>
+                <h3 className="font-medium mb-1">{t("common.draft")}</h3>
                 <div className="h-10 flex items-center">
                   <Switch
                     id="isDraft"
@@ -319,11 +315,11 @@ export default function CountryFormPage({ isEdit = false }: Props) {
               </div>
 
               <div className="md:col-span-3 space-y-2">
-                <Label className="block">
+                <h3 className="font-medium mb-1">
                   {formData.isDeleted
                     ? t("button.restore")
                     : t("button.delete")}
-                </Label>
+                </h3>
                 <div className="h-10 flex items-center">
                   <Button
                     variant="ghost"
@@ -367,7 +363,7 @@ export default function CountryFormPage({ isEdit = false }: Props) {
 
             {/* Flag Upload */}
             <div className="space-y-2">
-              <Label className="block">{t("form.flag")}</Label>
+              <h3 className="font-medium mb-1">{t("form.flag")}</h3>
               <div
                 className={`border-2 border-dashed rounded-lg p-6 text-center ${
                   isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"

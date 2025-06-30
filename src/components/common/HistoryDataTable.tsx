@@ -22,7 +22,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-// import { useTranslation } from "react-i18next";
 
 type HistoryEntry = {
   id: string;
@@ -46,15 +45,20 @@ export default function HistoryDataTable({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState({});
 
+  // Cell selection state
+  const [selectedCell, setSelectedCell] = useState({
+    rowIndex: -1,
+    columnId: "",
+  });
+
   // Infinite scroll states
-  const [displayedRows, setDisplayedRows] = useState(15); // Initial rows to show
+  const [displayedRows, setDisplayedRows] = useState(15);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  //   const { t } = useTranslation();
 
-  const ITEMS_PER_LOAD = 10; // Items to load per scroll
+  const ITEMS_PER_LOAD = 10;
 
   const columns = useMemo(() => {
     const columns: ColumnDef<HistoryEntry>[] = [
@@ -279,19 +283,85 @@ export default function HistoryDataTable({
   const filteredData = table.getFilteredRowModel().rows;
   const visibleRows = filteredData.slice(0, displayedRows);
 
+  // Cell selection functions
+  const handleCellClick = useCallback((rowIndex: number, columnId: string) => {
+    setSelectedCell({ rowIndex, columnId });
+  }, []);
+
+  const isCellSelected = (rowIndex: number, columnId: string) => {
+    return (
+      selectedCell.rowIndex === rowIndex && selectedCell.columnId === columnId
+    );
+  };
+
+  // Keyboard navigation
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (selectedCell.rowIndex === -1 || !selectedCell.columnId) return;
+
+      const rows = visibleRows;
+      const columns = table.getAllColumns().filter((col) => col.getIsVisible());
+      const columnIds = columns.map((col) => col.id);
+      const currentRowIndex = selectedCell.rowIndex;
+      const currentColumnIndex = columnIds.indexOf(selectedCell.columnId);
+
+      let newRowIndex = currentRowIndex;
+      let newColumnIndex = currentColumnIndex;
+
+      switch (e.key) {
+        case "ArrowUp":
+          e.preventDefault();
+          newRowIndex = Math.max(0, currentRowIndex - 1);
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          newRowIndex = Math.min(rows.length - 1, currentRowIndex + 1);
+          break;
+        case "ArrowLeft":
+          e.preventDefault();
+          newColumnIndex = Math.max(0, currentColumnIndex - 1);
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          newColumnIndex = Math.min(
+            columnIds.length - 1,
+            currentColumnIndex + 1
+          );
+          break;
+        default:
+          return;
+      }
+
+      setSelectedCell({
+        rowIndex: newRowIndex,
+        columnId: columnIds[newColumnIndex],
+      });
+    },
+    [selectedCell, visibleRows, table]
+  );
+
+  // Add keyboard event listener
+  useEffect(() => {
+    const tableContainer = tableContainerRef.current;
+    if (tableContainer) {
+      tableContainer.addEventListener("keydown", handleKeyDown);
+      tableContainer.setAttribute("tabindex", "0");
+      return () => {
+        tableContainer.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, [handleKeyDown]);
+
   // Load more data function
   const loadMoreData = useCallback(async () => {
     if (isLoading || !hasMore) return;
 
     setIsLoading(true);
-
-    // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     const newDisplayedRows = displayedRows + ITEMS_PER_LOAD;
     setDisplayedRows(newDisplayedRows);
 
-    // Check if we've loaded all available data
     if (newDisplayedRows >= filteredData.length) {
       setHasMore(false);
     }
@@ -305,7 +375,7 @@ export default function HistoryDataTable({
     if (!container) return;
 
     const { scrollTop, scrollHeight, clientHeight } = container;
-    const threshold = 100; // Load more when 100px from bottom
+    const threshold = 100;
 
     if (scrollHeight - scrollTop <= clientHeight + threshold) {
       loadMoreData();
@@ -326,30 +396,26 @@ export default function HistoryDataTable({
     setDisplayedRows(15);
     setHasMore(true);
     setIsLoading(false);
+    setSelectedCell({ rowIndex: -1, columnId: "" }); // Reset selection on filter change
   }, [columnFilters]);
 
   return (
     <div className="h-[67vh] flex flex-col">
-      {/* Header with close button - Fixed */}
-      {/* <div className="flex-shrink-0 flex items-center justify-between p-4 border-b bg-blue-50">
-        <h2 className="text-lg font-semibold text-blue-600">Country History</h2>
-        <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
-          <X className="h-5 w-5" />
-        </Button>
-      </div> */}
-
-      {/* Table Container - Flexible height for scrolling */}
+      {/* Table Container - Single table for proper alignment */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Table Header - Fixed */}
-        <div className="flex-shrink-0 bg-gray-50 border-b border-gray-200">
-          <table className="w-full">
-            <thead>
+        <div
+          ref={tableContainerRef}
+          className="flex-1 overflow-auto scroll-smooth smooth-scroll focus:outline-none border border-gray-200 rounded-lg"
+          tabIndex={0}
+        >
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-50 sticky top-0 z-10">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200 bg-gray-50"
                       style={{
                         width: `${header.getSize()}px`,
                         minWidth: `${
@@ -366,28 +432,24 @@ export default function HistoryDataTable({
                 </tr>
               ))}
             </thead>
-          </table>
-        </div>
-
-        {/* Scrollable Table Body */}
-        <div
-          ref={tableContainerRef}
-          className="flex-1 overflow-auto scroll-smooth smooth-scroll"
-        >
-          <table className="w-full">
             <tbody className="bg-white divide-y divide-gray-200">
               {visibleRows.map((row) => (
                 <tr key={row.id} className="hover:bg-gray-50">
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
-                      className="px-3 py-2 whitespace-nowrap text-sm"
+                      className={`px-3 py-2 whitespace-nowrap text-sm cursor-pointer ${
+                        isCellSelected(row.index, cell.column.id)
+                          ? "ring-2 ring-blue-500 ring-inset bg-blue-50"
+                          : "hover:bg-gray-100"
+                      }`}
                       style={{
                         width: `${cell.column.getSize()}px`,
                         minWidth: `${
                           cell.column.columnDef.minSize || cell.column.getSize()
                         }px`,
                       }}
+                      onClick={() => handleCellClick(row.index, cell.column.id)}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -437,6 +499,12 @@ export default function HistoryDataTable({
             Showing {Math.min(displayedRows, filteredData.length)} of{" "}
             {filteredData.length} entries
           </span>
+          {selectedCell.rowIndex !== -1 && (
+            <span className="text-blue-600">
+              Selected: Row {selectedCell.rowIndex + 1}, Column{" "}
+              {selectedCell.columnId}
+            </span>
+          )}
         </div>
       </div>
     </div>
