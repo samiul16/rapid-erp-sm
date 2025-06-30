@@ -25,7 +25,7 @@ export default function ColumnVisibilityPanel<TData>({
 
   return (
     <div
-      className={`w-72 h-[302px] flex flex-col border rounded-lg transition-width duration-300 ease-in-out bg-white dark:bg-gray-900 overflow-hidden shadow-lg`}
+      className={`w-72 h-[55vh] flex flex-col border rounded-lg transition-width duration-300 ease-in-out bg-white dark:bg-gray-900 overflow-hidden shadow-lg`}
     >
       {/* Fixed Top Section */}
       <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 border-b px-3 py-2">
@@ -38,6 +38,7 @@ export default function ColumnVisibilityPanel<TData>({
                 table.toggleAllColumnsVisible(!!checked);
                 setAllColumnsVisible(!!checked);
               }}
+              className="data-[state=checked]:bg-blue-500 data-[state=checked]:text-white"
             />
             <div className="relative flex-1">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
@@ -85,7 +86,7 @@ export default function ColumnVisibilityPanel<TData>({
                   column.toggleVisibility(!!value);
                   setAllColumnsVisible(table.getIsAllColumnsVisible());
                 }}
-                className="mr-2"
+                className="mr-2 data-[state=checked]:bg-blue-500 data-[state=checked]:text-white"
               />
               <label htmlFor={`column-${column.id}`} className="text-sm">
                 {column.id}

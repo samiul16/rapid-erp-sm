@@ -14,6 +14,7 @@ type SummaryCardsProps = {
     active: number;
     inactive: number;
     deleted: number;
+    updated: number;
   };
 };
 
@@ -107,6 +108,15 @@ export default function SummaryCards({ data }: SummaryCardsProps) {
       borderColor: "gray-200",
       showPercentage: true,
       total: 5,
+    },
+    {
+      key: "updated",
+      title: "Updated",
+      icon: <CheckCircle size={32} className="text-green-500" />,
+      color: "green",
+      borderColor: "blue-200",
+      showPercentage: true,
+      total: 30,
     },
     {
       key: "deleted",

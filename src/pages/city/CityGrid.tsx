@@ -10,7 +10,7 @@ import {
   Search,
   RefreshCw,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -123,6 +123,67 @@ export default function CitiesGrid({
     message: <ImportStepper />,
   });
 
+  // Infinite scroll states
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [, setPage] = useState(1);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const ITEMS_PER_PAGE = 4;
+
+  // Simulate API call to load more data
+  const loadMoreData = useCallback(async () => {
+    if (isLoading || !hasMore) return;
+
+    setIsLoading(true);
+
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
+    // Generate more mock cities for demonstration
+    const newItems = Array.from({ length: ITEMS_PER_PAGE }, (_, index) => ({
+      id: `${Date.now()}-${index}`,
+      name: `City ${citiesData.length + index + 1}`,
+      country: `Country ${Math.floor(Math.random() * 10) + 1}`,
+      description: `Description for City ${citiesData.length + index + 1}`,
+      default: Math.random() > 0.7,
+      status: Math.random() > 0.3 ? "active" : "inactive",
+      state: `State ${Math.floor(Math.random() * 10) + 1}`,
+      deleted: false,
+    }));
+
+    // Stop loading more after reaching 50 items for demo
+    if (citiesData.length >= 46) {
+      setHasMore(false);
+    } else {
+      setCitiesData((prev) => [...prev, ...newItems]);
+      setPage((prev) => prev + 1);
+    }
+
+    setIsLoading(false);
+  }, [citiesData.length, isLoading, hasMore]);
+
+  // Infinite scroll handler
+  const handleScroll = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const threshold = 100; // Load more when 100px from bottom
+
+    if (scrollHeight - scrollTop <= clientHeight + threshold) {
+      loadMoreData();
+    }
+  }, [loadMoreData]);
+
+  // Add scroll event listener
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
   const handleDeleteClick = (cityId: string) => {
     setCityToDelete(cityId);
     setIsShowResetButton(true);
@@ -160,15 +221,15 @@ export default function CitiesGrid({
   );
 
   return (
-    <div className="px-4 py-3 h-full flex flex-col bg-white dark:bg-gray-900">
+    <div className="h-full flex flex-col bg-white dark:bg-gray-900">
       {/* Fixed header controls */}
-      <div className="sticky top-0 z-50 bg-white dark:bg-gray-900 pb-2">
+      <div className="sticky top-0 bg-white dark:bg-gray-900 px-4 py-3">
         <div className="grid grid-cols-12 gap-4 items-center">
           {/* Left buttons */}
           <div className="col-span-4 flex items-center gap-2">
             <Button
               variant="outline"
-              className="gap-2 cursor-pointer"
+              className="gap-2 cursor-pointer bg-blue-300 hover:bg-blue-700 text-blue-700 hover:text-white rounded-full min-w-[60px] sm:min-w-[80px]"
               onClick={() => handleViewModeChange("list")}
             >
               <List className="h-4 w-4" />
@@ -176,9 +237,8 @@ export default function CitiesGrid({
             </Button>
             <Button
               variant="outline"
-              className="gap-2 cursor-pointer"
+              className="gap-2 cursor-pointer bg-blue-300 hover:bg-blue-700 text-blue-700 hover:text-white rounded-full"
               onClick={() => {
-                console.log("Import City Modal open");
                 open();
                 setModalData({
                   title: "Import City",
@@ -193,19 +253,19 @@ export default function CitiesGrid({
 
           {/* Search */}
           <div className="col-span-4 flex justify-center">
-            <div className="w-full max-w-md">
+            <div className="w-full max-w-xs mx-auto">
               <div className="relative flex items-center rounded-full">
-                <Search className="absolute left-3 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 h-4 w-4 text-gray-400 z-10" />
                 <Input
                   placeholder="Search cities..."
-                  className="pl-9 pr-9 w-full rounded-full"
+                  className="pl-9 pr-9 w-full rounded-full relative z-10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 <Button
                   variant="outline"
                   size="icon"
-                  className="absolute right-2 h-6 w-6 rounded-full cursor-pointer p-0"
+                  className="absolute right-2 h-6 w-6 rounded-full cursor-pointer p-0 z-10"
                 >
                   <Mic className="h-4 w-4 text-blue-400" />
                 </Button>
@@ -217,7 +277,7 @@ export default function CitiesGrid({
           <div className="col-span-4 flex items-center justify-end gap-2">
             <Button
               variant="outline"
-              className={`gap-2 cursor-pointer hover:bg-blue-400 hover:text-white ${
+              className={`gap-2 cursor-pointer bg-blue-300 hover:bg-blue-700 text-blue-700 hover:text-white rounded-full ${
                 isExportOpen ? "bg-blue-400 text-white" : ""
               }`}
               onClick={() => {
@@ -231,7 +291,7 @@ export default function CitiesGrid({
 
             <Button
               variant="outline"
-              className={`gap-2 cursor-pointer hover:bg-blue-400 hover:text-white ${
+              className={`gap-2 cursor-pointer bg-blue-300 hover:bg-blue-700 text-blue-700 hover:text-white rounded-full ${
                 isFilterOpen ? "bg-blue-400 text-white" : ""
               }`}
               onClick={() => {
@@ -247,12 +307,15 @@ export default function CitiesGrid({
       </div>
 
       {/* Main content area */}
-      <div className="flex flex-1 overflow-hidden mt-2">
-        {/* Cards container - 75% width */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Cards container */}
         <div
-          className={`${isFilterOpen ? "w-4/5" : "w-5/5"} pr-4 overflow-y-auto`}
+          ref={scrollContainerRef}
+          className={`flex-1 overflow-y-auto p-4 transition-all duration-300 ${
+            isFilterOpen || isExportOpen ? "md:w-3/4" : "w-full"
+          }`}
         >
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-4">
             {filteredCities.map((city) => (
               <Card
                 key={city.id}
@@ -333,39 +396,54 @@ export default function CitiesGrid({
               </Card>
             ))}
           </div>
-        </div>
 
-        {/* Filter component - 25% width */}
-        <div
-          className={`${
-            isFilterOpen ? "w-1/5" : "w-0"
-          } pl-4 dark:border-gray-700`}
-        >
-          {isFilterOpen && (
-            <GridFilterComponent
-              data={cities}
-              setFilteredData={setCitiesData}
-              setShowFilter={setIsShowResetButton}
-            />
+          {/* Loading indicator */}
+          {isLoading && (
+            <div className="flex justify-center items-center py-8">
+              <div className="flex items-center gap-2 text-blue-600">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <span className="text-sm">Loading more cities...</span>
+              </div>
+            </div>
+          )}
+
+          {/* End of data indicator */}
+          {!hasMore && filteredCities.length > 8 && (
+            <div className="flex justify-center items-center py-8">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                No more cities to load
+              </span>
+            </div>
           )}
         </div>
 
-        {/* Export component - 25% width */}
-        <div
-          className={`${
-            isExportOpen ? "w-1/5" : "w-0"
-          } pl-4 dark:border-gray-700`}
-        >
+        {/* Right side panels */}
+        <div className="hidden md:flex flex-col">
+          {/* Filter component */}
+          {isFilterOpen && (
+            <div className="w-80 h-full border-l border-gray-200 dark:border-gray-700">
+              <GridFilterComponent
+                data={cities}
+                setFilteredData={setCitiesData}
+                setShowFilter={setIsShowResetButton}
+              />
+            </div>
+          )}
+
+          {/* Export component */}
           {isExportOpen && (
-            <GridExportComponent
-              data={cities}
-              setFilteredData={setCitiesData}
-              setIsExportOpen={setIsExportOpen}
-            />
+            <div className="w-80 h-full border-l border-gray-200 dark:border-gray-700">
+              <GridExportComponent
+                data={cities}
+                setFilteredData={setCitiesData}
+                setIsExportOpen={setIsExportOpen}
+              />
+            </div>
           )}
         </div>
       </div>
 
+      {/* Modal */}
       <Modal
         opened={opened}
         onClose={close}
@@ -375,6 +453,7 @@ export default function CitiesGrid({
           backgroundOpacity: 0.55,
           blur: 3,
         }}
+        zIndex={9999}
       >
         <div className="pt-5 pb-14 px-5">{modalData.message}</div>
       </Modal>

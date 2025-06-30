@@ -21,7 +21,7 @@ export function ExportComponent({
   const [exportSearch, setExportSearch] = useState("");
 
   return (
-    <div className="w-72 h-[302px] flex flex-col border rounded-lg overflow-hidden ">
+    <div className="w-72 h-[55vh] flex flex-col border rounded-lg overflow-hidden ">
       {/* Top Section */}
       <div className="bg-white dark:bg-gray-900 border-b px-3 py-2">
         <div className="flex items-center gap-2">
@@ -40,6 +40,7 @@ export function ExportComponent({
                 .forEach((col: any) => col.toggleVisibility(!!checked));
               setAllColumnsVisible(!!checked);
             }}
+            className="data-[state=checked]:bg-blue-500 data-[state=checked]:text-white"
           />
 
           {/* Search Input */}
@@ -111,6 +112,7 @@ export function ExportComponent({
                         ).length
                   );
                 }}
+                className="data-[state=checked]:bg-blue-500 data-[state=checked]:text-white"
               />
               <span>{column.id}</span>
             </div>

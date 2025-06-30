@@ -19,11 +19,11 @@ const MainLayout = () => {
         </div>
 
         {/* Content area with precise height calculation */}
-        <div className="flex flex-col flex-1 min-h-0 dark:bg-gray-900 max-w-[calc(100%-120px)]">
+        <div className="flex flex-col flex-1 min-w-0 overflow-hidden dark:bg-gray-900">
           {" "}
           {/* min-h-0 prevents growing beyond parent */}
           {/* Outlet with exact remaining height (after navbar and footer) */}
-          <div className="flex-1 overflow-hidden pl-5">
+          <div className="flex-1 overflow-hidden pl-2">
             <Outlet />
           </div>
           {/* Footer with fixed height */}

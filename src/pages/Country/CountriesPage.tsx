@@ -1,15 +1,20 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import SummaryCards from "./SummaryCards";
+// import SummaryCards from "./SummaryCards";
 import CountryGrid from "./CountriesGrid";
-import CountryDataTable from "./CountryDataTable";
+// import CountryDataTable from "./CountryDataTable";
 import YoutubeButton from "@/components/common/YoutubeButton";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import CountryDataTable2 from "./CountryDataTable2";
+import GmailTabs from "@/components/common/TableTabs";
+import VerticalSummaryCards from "./VerticalSummaryCards";
+// import { useGetCountriesQuery } from "@/store/api/countriesApi";
+// import { useGetAllRestaurantDataQuery } from "@/store/api/restaurantApi";
 
 export default function CountryPage() {
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState("grid");
   const { t } = useTranslation();
 
   // Mock data - replace with real data from your API
@@ -19,17 +24,25 @@ export default function CountryPage() {
     active: 30,
     inactive: 5,
     deleted: 2,
+    updated: 2,
   };
+
+  // Get all data
+  // const {
+  //   data: allData,
+  //   error: allDataError,
+  //   isLoading: isLoadingAll,
+  // } = useGetAllRestaurantDataQuery({ lang: "en" });
 
   // YouTube video ID (the part after 'v=' in the URL)
   const videoId = "PcVAyB3nDD4";
 
   return (
-    <div className="container mx-auto px-4 py-4 dark:bg-gray-900">
+    <div className=" w-100vw px-4 py-4 dark:bg-gray-900">
       {/* Header Section */}
       <div className="flex items-center gap-4 mb-4">
         <YoutubeButton videoId={videoId} />
-        <h1 className="text-2xl font-bold flex-1 text-blue-400">Countries</h1>
+        <h1 className="text-2xl font-bold flex-1 text-blue-300">Countries</h1>
         <Button
           className="bg-blue-400 hover:bg-blue-700 text-white rounded-full cursor-pointer"
           onClick={() => navigate("/countries/create")}
@@ -39,7 +52,11 @@ export default function CountryPage() {
         </Button>
       </div>
 
-      <SummaryCards data={summaryData} />
+      {viewMode === "grid" ? (
+        <VerticalSummaryCards data={summaryData} />
+      ) : (
+        <GmailTabs />
+      )}
 
       {/* View Controls Section */}
       {/* <div className="mt-8 border-b pb-4">
@@ -124,13 +141,17 @@ export default function CountryPage() {
       </div> */}
 
       {/* Scrollable Content Area */}
-      <div className="mt-4 h-[calc(100vh-350px)] overflow-y-auto overflow-x-hidden border rounded-lg scroll-smooth [scrollbar-gutter:stable]">
-        {viewMode === "grid" ? (
+      {/* <div className="mt-4 h-[62vh] overflow-y-auto overflow-x-hidden border rounded-lg scroll-smooth [scrollbar-gutter:stable]"> */}
+      {viewMode === "grid" ? (
+        <div className="mt-4 h-[calc(100vh-350px)] md:h-[calc(100vh-350px)] lg:h-[calc(100vh-350px)] xl:h-[calc(100vh-380px)] overflow-y-auto overflow-x-hidden border rounded-lg scroll-smooth [scrollbar-gutter:stable]">
           <CountryGrid setViewMode={setViewMode} />
-        ) : (
-          <CountryDataTable viewMode={viewMode} setViewMode={setViewMode} />
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="mt-4 h-[calc(100vh-270px)] md:h-[calc(100vh-270px)] lg:h-[calc(100vh-270px)] xl:h-[calc(100vh-270px)] overflow-y-auto overflow-x-hidden border rounded-lg scroll-smooth [scrollbar-gutter:stable]">
+          <CountryDataTable2 viewMode={viewMode} setViewMode={setViewMode} />
+        </div>
+      )}
+      {/* </div> */}
     </div>
   );
 }

@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Trash2, Undo, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -8,14 +9,24 @@ import YoutubeButton from "@/components/common/YoutubeButton";
 import EditableInput from "@/components/common/EditableInput";
 import { useNavigate } from "react-router-dom";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Modal } from "@mantine/core";
+import { format } from "date-fns";
 
 type CityData = {
+  draftedAt: Date;
+  deletedAt: Date;
   id?: string;
   name: string;
   countryCode: string;
@@ -24,10 +35,10 @@ type CityData = {
   isDefault: boolean;
   isActive: boolean;
   isDraft: boolean;
-  rating: number;
+  isDeleted: boolean;
   image: string | null;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 type CountryOption = {
@@ -46,72 +57,18 @@ type StateOption = {
 const MOCK_COUNTRIES: CountryOption[] = [
   { code: "AE", name: "United Arab Emirates", flag: "🇦🇪", callingCode: "+971" },
   { code: "US", name: "United States", flag: "🇺🇸", callingCode: "+1" },
-  { code: "GB", name: "United Kingdom", flag: "🇬🇧", callingCode: "+44" },
-  { code: "IN", name: "India", flag: "🇮🇳", callingCode: "+91" },
-  { code: "SA", name: "Saudi Arabia", flag: "🇸🇦", callingCode: "+966" },
-  { code: "PK", name: "Pakistan", flag: "🇵🇰", callingCode: "+92" },
-  { code: "EG", name: "Egypt", flag: "🇪🇬", callingCode: "+20" },
-  { code: "CA", name: "Canada", flag: "🇨🇦", callingCode: "+1" },
-  { code: "AU", name: "Australia", flag: "🇦🇺", callingCode: "+61" },
-  { code: "FR", name: "France", flag: "🇫🇷", callingCode: "+33" },
 ];
 
 const MOCK_STATES: StateOption[] = [
-  // United Arab Emirates
   { code: "DXB", name: "Dubai", countryCode: "AE" },
   { code: "AUH", name: "Abu Dhabi", countryCode: "AE" },
-  { code: "SHJ", name: "Sharjah", countryCode: "AE" },
-
-  // United States
   { code: "CA", name: "California", countryCode: "US" },
   { code: "NY", name: "New York", countryCode: "US" },
-  { code: "TX", name: "Texas", countryCode: "US" },
-  { code: "FL", name: "Florida", countryCode: "US" },
-
-  // United Kingdom
-  { code: "ENG", name: "England", countryCode: "GB" },
-  { code: "SCT", name: "Scotland", countryCode: "GB" },
-  { code: "WLS", name: "Wales", countryCode: "GB" },
-  { code: "NIR", name: "Northern Ireland", countryCode: "GB" },
-
-  // India
-  { code: "MH", name: "Maharashtra", countryCode: "IN" },
-  { code: "DL", name: "Delhi", countryCode: "IN" },
-  { code: "KA", name: "Karnataka", countryCode: "IN" },
-  { code: "TN", name: "Tamil Nadu", countryCode: "IN" },
-
-  // Saudi Arabia
-  { code: "RIY", name: "Riyadh Province", countryCode: "SA" },
-  { code: "MAK", name: "Makkah Province", countryCode: "SA" },
-  { code: "MED", name: "Madinah Province", countryCode: "SA" },
-
-  // Pakistan
-  { code: "PUN", name: "Punjab", countryCode: "PK" },
-  { code: "SIN", name: "Sindh", countryCode: "PK" },
-  { code: "KPK", name: "Khyber Pakhtunkhwa", countryCode: "PK" },
-
-  // Egypt
-  { code: "CAI", name: "Cairo", countryCode: "EG" },
-  { code: "ALX", name: "Alexandria", countryCode: "EG" },
-  { code: "LUX", name: "Luxor", countryCode: "EG" },
-
-  // Canada
-  { code: "ON", name: "Ontario", countryCode: "CA" },
-  { code: "QC", name: "Quebec", countryCode: "CA" },
-  { code: "BC", name: "British Columbia", countryCode: "CA" },
-
-  // Australia
-  { code: "NSW", name: "New South Wales", countryCode: "AU" },
-  { code: "VIC", name: "Victoria", countryCode: "AU" },
-  { code: "QLD", name: "Queensland", countryCode: "AU" },
-
-  // France
-  { code: "IDF", name: "Île-de-France", countryCode: "FR" },
-  { code: "PACA", name: "Provence-Alpes-Côte d'Azur", countryCode: "FR" },
-  { code: "ARA", name: "Auvergne-Rhône-Alpes", countryCode: "FR" },
 ];
 
 const defaultCityData: CityData = {
+  draftedAt: new Date(),
+  deletedAt: new Date(),
   name: "",
   countryCode: "",
   stateCode: "",
@@ -119,22 +76,24 @@ const defaultCityData: CityData = {
   isDefault: false,
   isActive: true,
   isDraft: false,
-  rating: 3,
+  isDeleted: false,
   image: null,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
-type Props = {
+export default function CityForm({
+  isEdit = false,
+  initialData,
+}: {
   isEdit?: boolean;
   initialData?: CityData;
-};
-
-export default function CityForm({ isEdit = false, initialData }: Props) {
-  const { t, i18n } = useTranslation();
-  const [keepCreating, setKeepCreating] = useState(false);
+}) {
+  const { t } = useTranslation();
+  const [keepChanges, setKeepChanges] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const navigate = useNavigate();
@@ -145,75 +104,18 @@ export default function CityForm({ isEdit = false, initialData }: Props) {
 
   useEffect(() => {
     if (isEdit && initialData) {
-      setFormData({
-        ...initialData,
-        image: null,
-      });
+      setFormData(initialData);
       if (initialData.image) {
         setImagePreview(initialData.image);
       }
     }
   }, [isEdit, initialData]);
 
-  const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      handleImageFile(files[0]);
-    }
-  };
-
-  const handleImageFile = (file: File) => {
-    if (file.type.match("image.*")) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
-        setFormData({ ...formData, image: e.target?.result as string });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleImageFile(file);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
-  };
-
   const handleCountryChange = (value: string) => {
     setFormData({
       ...formData,
       countryCode: value,
-      stateCode: "", // Reset state when country changes
+      stateCode: "",
     });
   };
 
@@ -229,25 +131,40 @@ export default function CityForm({ isEdit = false, initialData }: Props) {
   };
 
   const getFilteredStates = () => {
-    if (!formData.countryCode) return [];
     return MOCK_STATES.filter(
       (state) => state.countryCode === formData.countryCode
     );
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+        setFormData({ ...formData, image: e.target?.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("City form submitted:", formData);
-    // Add your submission logic here
+    console.log("Form submitted:", formData);
   };
 
   const handleReset = () => {
     if (window.confirm(t("form.resetConfirm"))) {
       setFormData(defaultCityData);
       setImagePreview(null);
-      if (formRef.current) {
-        formRef.current.reset();
-      }
     }
   };
 
@@ -255,326 +172,447 @@ export default function CityForm({ isEdit = false, initialData }: Props) {
     fileInputRef.current?.click();
   };
 
-  console.log("isEdit", isEdit);
+  const handleDragEvents = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setIsDragging(true);
+    } else {
+      setIsDragging(false);
+    }
+  };
+
+  // Handle date selection
+  const handleDateSelect = (date: Date | undefined, field: keyof CityData) => {
+    if (date) {
+      setFormData({
+        ...formData,
+        [field]: date,
+      });
+    }
+  };
+
+  // Format date for display
+  const formatDateDisplay = (date: Date | null) => {
+    return date ? format(date, "dd/MM/yyyy") : "--/--/----";
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    handleDragEvents(e);
+    const file = e.dataTransfer.files[0];
+    if (file?.type.match("image.*")) {
+      handleImageChange({ target: { files: [file] } } as any);
+    }
+  };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div
-        className="container mx-auto px-4 py-6 flex-grow"
-        dir={i18n.language === "ar" ? "rtl" : "ltr"}
-      >
+    <div className="relative w-full">
+      <div className="flex flex-col h-[calc(100vh-160px)] overflow-hidden border rounded shadow bg-white dark:bg-gray-800">
         {/* Header */}
-        <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-4 mb-8">
-          <div className="flex gap-2 items-center">
-            <YoutubeButton videoId="your-video-id" />
+        <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 border-b px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <YoutubeButton videoId="PcVAyB3nDD4" />
             <h1 className="text-xl font-bold text-blue-400">
               {isEdit ? t("form.editingCity") : t("form.creatingCity")}
             </h1>
           </div>
-          <div className="flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 bg-blue-400 hover:bg-blue-600 text-white cursor-pointer"
-              onClick={() => navigate("/cities")}
-            >
-              {t("button.list")}
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            className="gap-2 bg-blue-400 hover:bg-blue-600 text-white rounded-full"
+            onClick={() => navigate("/cities")}
+          >
+            {t("button.list")}
+          </Button>
         </div>
 
-        {/* Main Form */}
-        <form
-          ref={formRef}
-          onSubmit={handleSubmit}
-          className="bg-white rounded-lg shadow-sm border p-6 mb-6 dark:bg-gray-800 dark:border-gray-700"
-        >
-          {/* First Row: Name, Country, State, Description */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
-            {/* City Name - 3 columns */}
-            <div className="md:col-span-3 space-y-1">
-              <Label htmlFor="name">{t("form.cityName")}</Label>
-              <EditableInput
-                id="name"
-                name="name"
-                className="h-10"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder={t("form.cityNamePlaceholder")}
-                onNext={() => {
-                  document.getElementById("countryCode")?.focus();
-                }}
-                onCancel={() => {
-                  setFormData({ ...formData, name: "" });
-                }}
-                required
-              />
-            </div>
+        {/* Scrollable Form Section */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+          <form ref={formRef} onSubmit={handleSubmit}>
+            {/* First Row */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-4 space-y-2">
+                <Label htmlFor="name" className="block">
+                  {t("form.cityName")}
+                </Label>
+                <EditableInput
+                  id="name"
+                  name="name"
+                  className="w-full h-10"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder={t("form.cityNamePlaceholder")}
+                  onNext={() => console.log("Next")}
+                  onCancel={() => setFormData({ ...formData, name: "" })}
+                  required
+                />
+              </div>
 
-            {/* Country Dropdown - 2 columns */}
-            <div className="md:col-span-2 space-y-1">
-              <Label htmlFor="countryCode">{t("form.country")}</Label>
-              <Select
-                value={formData.countryCode}
-                onValueChange={handleCountryChange}
-              >
-                <SelectTrigger className="h-10">
-                  <SelectValue>
-                    {isEdit && formData.countryCode ? (
-                      <div className="flex items-center gap-2">
-                        <span>{getSelectedCountry()?.flag}</span>
-                        <span>{getSelectedCountry()?.name}</span>
-                      </div>
-                    ) : (
-                      <span>{t("form.selectCountry")}</span>
-                    )}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {MOCK_COUNTRIES.map((country) => (
-                    <SelectItem key={country.code} value={country.code}>
-                      <div className="flex items-center gap-2">
-                        <span>{country.flag}</span>
-                        <span>{country.name}</span>
-                        <span className="text-muted-foreground ml-2">
-                          {country.callingCode}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="md:col-span-4 space-y-2">
+                <Label htmlFor="countryCode" className="block">
+                  {t("form.country")}
+                </Label>
+                <Select
+                  value={formData.countryCode}
+                  onValueChange={handleCountryChange}
+                >
+                  <SelectTrigger className="h-10" id="countryCode">
+                    <SelectValue placeholder={t("form.selectCountry")}>
+                      {formData.countryCode && getSelectedCountry() ? (
+                        <div className="flex items-center gap-2">
+                          <span>{getSelectedCountry()?.flag}</span>
+                          <span>{getSelectedCountry()?.name}</span>
+                        </div>
+                      ) : null}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MOCK_COUNTRIES.map((country) => (
+                      <SelectItem key={country.code} value={country.code}>
+                        <div className="flex items-center gap-2">
+                          <span>{country.flag}</span>
+                          <span>{country.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* State Dropdown - 2 columns */}
-            {/* State Dropdown - 2 columns */}
-            <div className="md:col-span-2 space-y-1">
-              <Label htmlFor="stateCode">{t("form.state")}</Label>
-              <Select
-                value={formData.stateCode}
-                onValueChange={handleStateChange}
-              >
-                <SelectTrigger className="h-10">
-                  <SelectValue>
-                    {formData.stateCode
-                      ? MOCK_STATES.find((s) => s.code === formData.stateCode)
-                          ?.name || t("form.selectState")
-                      : t("form.selectState")}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {getFilteredStates().length > 0 ? (
-                    getFilteredStates().map((state) => (
+              <div className="md:col-span-4 space-y-2">
+                <Label htmlFor="stateCode" className="block">
+                  {t("form.state")}
+                </Label>
+                <Select
+                  value={formData.stateCode}
+                  onValueChange={handleStateChange}
+                  disabled={!formData.countryCode}
+                >
+                  <SelectTrigger className="h-10" id="stateCode">
+                    <SelectValue placeholder={t("form.selectState")}>
+                      {formData.stateCode
+                        ? MOCK_STATES.find((s) => s.code === formData.stateCode)
+                            ?.name
+                        : t("form.selectState")}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getFilteredStates().map((state) => (
                       <SelectItem key={state.code} value={state.code}>
                         {state.name}
                       </SelectItem>
-                    ))
-                  ) : (
-                    <div className="py-2 px-3 text-sm text-muted-foreground">
-                      {t("form.noStatesAvailable")}
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {/* Description - 5 columns */}
-            <div className="md:col-span-5 space-y-1">
-              <Label htmlFor="description">{t("form.description")}</Label>
-              <EditableInput
-                id="description"
-                name="description"
-                className="h-10"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder={t("form.descriptionPlaceholder")}
-                onNext={() => {
-                  document.getElementById("countryCode")?.focus();
-                }}
-                onCancel={() => {
-                  setFormData({ ...formData, description: "" });
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Second Row: Active, Draft, Delete, Default */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 items-center">
-            {/* Active Switch - 3 columns */}
-            <div className="md:col-span-3 flex items-center gap-4">
-              <Label htmlFor="isActive" className="whitespace-nowrap">
-                {t("common.active")}
-              </Label>
-              <Switch
-                id="isActive"
-                name="isActive"
-                className="data-[state=checked]:bg-blue-400"
-                checked={formData.isActive}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, isActive: checked })
-                }
-              />
-            </div>
-
-            {/* Draft Switch - 3 columns */}
-            <div className="md:col-span-3 flex items-center gap-4">
-              <Label htmlFor="isDraft" className="whitespace-nowrap">
-                {t("common.draft")}
-              </Label>
-              <Switch
-                id="isDraft"
-                name="isDraft"
-                className="data-[state=checked]:bg-blue-400"
-                checked={formData.isDraft}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, isDraft: checked })
-                }
-              />
-            </div>
-
-            {/* Delete Button - 3 columns (only in edit mode) */}
-            {isEdit && (
-              <div className="md:col-span-3 flex items-center gap-4">
-                <Label htmlFor="isDeleted" className="whitespace-nowrap">
-                  {t("button.delete")}
+            {/* Description Row */}
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="description" className="block">
+                  {t("form.description")}
                 </Label>
-                <Switch
-                  id="isDeleted"
-                  name="isDeleted"
-                  className="data-[state=checked]:bg-blue-400"
-                  onCheckedChange={() => console.log("Delete toggled")}
+                <EditableInput
+                  id="description"
+                  name="description"
+                  className="w-full h-10"
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder={t("form.descriptionPlaceholder")}
+                  onNext={() => console.log("Next")}
+                  onCancel={() => setFormData({ ...formData, description: "" })}
                 />
               </div>
-            )}
-
-            {/* Default Switch - 3 columns */}
-            <div className="md:col-span-3 flex items-center gap-4">
-              <Label htmlFor="isDefault" className="whitespace-nowrap">
-                {t("common.default")}
-              </Label>
-              <Switch
-                id="isDefault"
-                name="isDefault"
-                className="data-[state=checked]:bg-blue-400"
-                checked={formData.isDefault}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, isDefault: checked })
-                }
-              />
             </div>
-          </div>
 
-          {/* Third Row: City Image Upload with Drag and Drop - Full width */}
-          <div className="grid grid-cols-1 gap-4">
-            <Label>{t("form.cityImage")}</Label>
-            <div
-              className={`border-2 border-dashed rounded-lg p-6 text-center ${
-                isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
-              }`}
-              onDragEnter={handleDragEnter}
-              onDragLeave={handleDragLeave}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onClick={triggerFileInput}
-            >
-              {imagePreview ? (
-                <div className="relative inline-block">
-                  <img
-                    src={imagePreview}
-                    alt={t("form.imagePreview")}
-                    className="w-40 h-28 object-contain rounded-md"
+            {/* Toggles Row */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-3 space-y-2">
+                <Label htmlFor="isActive" className="block">
+                  {t("common.active")}
+                </Label>
+                <div className="h-10 flex items-center">
+                  <Switch
+                    id="isActive"
+                    name="isActive"
+                    className="data-[state=checked]:bg-blue-400"
+                    checked={formData.isActive}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, isActive: checked })
+                    }
                   />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white shadow-sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setImagePreview(null);
-                      setFormData({ ...formData, image: null });
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <Upload className="h-8 w-8 text-gray-400" />
-                  <p className="text-sm text-gray-500">
-                    {t("form.dragDropImage")}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {t("form.orClickToSelect")}
-                  </p>
+              </div>
+
+              <div className="md:col-span-3 space-y-2">
+                <Label htmlFor="isDraft" className="block">
+                  {t("common.draft")}
+                </Label>
+                <div className="h-10 flex items-center">
+                  <Switch
+                    id="isDraft"
+                    name="isDraft"
+                    className="data-[state=checked]:bg-blue-400"
+                    checked={formData.isDraft}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, isDraft: checked })
+                    }
+                  />
+                </div>
+              </div>
+
+              {isEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <Label className="block">
+                    {formData.isDeleted
+                      ? t("button.restore")
+                      : t("button.delete")}
+                  </Label>
+                  <div className="h-10 flex items-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          isDeleted: !formData.isDeleted,
+                        })
+                      }
+                    >
+                      {formData.isDeleted ? (
+                        <Undo className="text-green-500" />
+                      ) : (
+                        <Trash2 className="text-red-500" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
               )}
-              <input
-                ref={fileInputRef}
-                id="image"
-                name="image"
-                type="file"
-                onChange={handleImageChange}
-                accept="image/*"
-                className="hidden"
-              />
-            </div>
-          </div>
-        </form>
-      </div>
 
-      {/* Footer */}
-      <div className="sticky bottom-0 bg-white border mx-4 py-4 px-6 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-        <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-          {/* Left side - 8 columns */}
-          <div className="md:col-span-8 flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <Switch
-                id="keepCreating"
-                checked={keepCreating}
-                className="data-[state=checked]:bg-blue-400"
-                onCheckedChange={(checked) => setKeepCreating(!!checked)}
-              />
-              <Label
-                htmlFor="keepCreating"
-                className="cursor-pointer whitespace-nowrap"
+              <div className="md:col-span-3 space-y-2">
+                <Label htmlFor="isDefault" className="block">
+                  {t("common.default")}
+                </Label>
+                <div className="h-10 flex items-center">
+                  <Switch
+                    id="isDefault"
+                    name="isDefault"
+                    className="data-[state=checked]:bg-blue-400"
+                    checked={formData.isDefault}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, isDefault: checked })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Third Row: Dates */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start mt-4">
+              <div className="md:col-span-3 space-y-2">
+                <Label className="block">{t("common.createdAt")}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal h-10"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formatDateDisplay(formData.createdAt)}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={formData.createdAt || undefined}
+                      onSelect={(date) => handleDateSelect(date, "createdAt")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="md:col-span-3 space-y-2">
+                <Label className="block">{t("common.draftedAt")}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal h-10"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formatDateDisplay(formData.draftedAt)}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      onSelect={(date) => handleDateSelect(date, "draftedAt")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="md:col-span-3 space-y-2">
+                <Label className="block">{t("common.updatedAt")}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal h-10"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formatDateDisplay(formData.updatedAt)}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={formData.updatedAt || undefined}
+                      onSelect={(date) => handleDateSelect(date, "updatedAt")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="md:col-span-3 space-y-2">
+                <Label className="block">{t("common.deletedAt")}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal h-10"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formatDateDisplay(formData.deletedAt)}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={formData.deletedAt || undefined}
+                      onSelect={(date) => handleDateSelect(date, "deletedAt")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {/* Image Upload */}
+            <div className="space-y-2 mt-4">
+              <Label className="block">{t("form.cityImage")}</Label>
+              <div
+                className={`border-2 border-dashed rounded-lg p-6 text-center ${
+                  isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
+                }`}
+                onDragEnter={handleDragEvents}
+                onDragLeave={handleDragEvents}
+                onDragOver={handleDragEvents}
+                onDrop={handleDrop}
+                onClick={triggerFileInput}
               >
-                {t("button.keep")}
-              </Label>
+                {imagePreview ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={imagePreview}
+                      alt={t("form.imagePreview")}
+                      className="w-40 h-28 object-contain rounded-md"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white shadow-sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setImagePreview(null);
+                        setFormData({ ...formData, image: null });
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <Upload className="h-8 w-8 text-gray-400" />
+                    <p className="text-sm text-gray-500">
+                      {t("form.dragDropImage")}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {t("form.orClickToSelect")}
+                    </p>
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={handleImageChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+              </div>
+            </div>
+          </form>
+        </div>
+
+        {/* Fixed Bottom Button Bar */}
+        <div className="sticky bottom-0 z-30 bg-white dark:bg-gray-800 border-t px-6 py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex gap-6 items-center">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={keepChanges}
+                  className="data-[state=checked]:bg-blue-400"
+                  onCheckedChange={setKeepChanges}
+                />
+                <span className="dark:text-gray-200">
+                  {t("button.keepChanges")}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  className="data-[state=checked]:bg-blue-400"
+                  onClick={() => console.log("PDF export")}
+                />
+                <span className="dark:text-gray-200">PDF</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  className="data-[state=checked]:bg-blue-400"
+                  onClick={() => window.print()}
+                />
+                <span className="dark:text-gray-200">Print</span>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Switch id="print" className="data-[state=checked]:bg-blue-400" />
-              <Label
-                htmlFor="print"
-                className="cursor-pointer whitespace-nowrap"
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                className="gap-2 text-white bg-blue-400 hover:bg-blue-600 rounded-full"
+                onClick={handleReset}
               >
-                {t("button.print")}
-              </Label>
+                {t("button.reset")}
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2 text-white bg-blue-400 hover:bg-blue-600 rounded-full"
+                onClick={() => formRef.current?.requestSubmit()}
+              >
+                {t("button.submit")}
+              </Button>
             </div>
-
-            <div className="flex items-center gap-2">
-              <Switch id="pdf" className="data-[state=checked]:bg-blue-400" />
-              <Label htmlFor="pdf" className="cursor-pointer whitespace-nowrap">
-                {t("button.pdf")}
-              </Label>
-            </div>
-          </div>
-
-          {/* Right side - 4 columns */}
-          <div className="md:col-span-4 flex justify-end gap-4">
-            <Button variant="outline" onClick={handleReset} type="button">
-              {t("button.reset")}
-            </Button>
-            <Button
-              type="submit"
-              className="bg-blue-400 hover:bg-blue-600 text-white"
-              onClick={() => formRef.current?.requestSubmit()}
-            >
-              {t("button.submit")}
-            </Button>
           </div>
         </div>
       </div>
+
+      {/* Modal */}
+      <Modal
+        opened={isOptionModalOpen}
+        onClose={() => setIsOptionModalOpen(false)}
+        title="Options"
+        size="xl"
+        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
+      >
+        <div className="pt-5 pb-14 px-5">Modal Content</div>
+      </Modal>
     </div>
   );
 }

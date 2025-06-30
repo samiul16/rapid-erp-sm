@@ -60,7 +60,7 @@ export default function SimpleFilterComponent({
   };
 
   return (
-    <div className="w-72 h-[350px] flex flex-col border rounded-lg overflow-hidden bg-white dark:bg-gray-900">
+    <div className="w-72 h-[100vh] flex flex-col border rounded-lg overflow-hidden bg-white dark:bg-gray-900">
       {/* Header */}
       <div className="border-b px-3 py-2">
         <div className="flex items-center gap-2">
@@ -102,6 +102,7 @@ export default function SimpleFilterComponent({
                 onCheckedChange={(checked) =>
                   handleCheckboxChange(key, checked)
                 }
+                className="data-[state=checked]:bg-blue-500 data-[state=checked]:text-white"
               />
               <label htmlFor={`filter-${key}`} className="text-sm font-medium">
                 {key}

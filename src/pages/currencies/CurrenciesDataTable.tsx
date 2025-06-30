@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// import CommonDataTable from "@/components/common/CommonDataTable";
 import FixedColumnDataTable from "@/components/common/FixedColumnDataTable";
+import { useState } from "react";
 
 const mockStates = [
   {
@@ -226,13 +226,8 @@ const mockStates = [
   },
 ];
 
-export default function StatesDataTable({
-  viewMode,
-  setViewMode,
-}: {
-  viewMode: string;
-  setViewMode: (viewMode: string) => void;
-}) {
+export default function CurrenciesDataTable() {
+  const [viewMode, setViewMode] = useState("list");
   const componentColumns = [
     {
       accessorKey: "name",
@@ -428,20 +423,15 @@ export default function StatesDataTable({
       minSize: 100,
     },
   ];
-
   return (
-    <FixedColumnDataTable
-      columnData={mockStates}
-      viewMode={viewMode}
-      setViewMode={setViewMode}
-      componentColumns={componentColumns}
-      fixedColumns={[]}
-    />
-    // <CommonDataTable
-    //   columnData={mockStates}
-    //   viewMode={viewMode}
-    //   setViewMode={setViewMode}
-    //   componentColumns={componentColumns}
-    // />
+    <div>
+      <FixedColumnDataTable
+        componentColumns={componentColumns}
+        columnData={mockStates}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        fixedColumns={["name", "country"]}
+      />
+    </div>
   );
 }

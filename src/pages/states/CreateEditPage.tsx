@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-// import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -39,13 +38,6 @@ const MOCK_COUNTRIES: CountryOption[] = [
   { code: "AE", name: "United Arab Emirates", flag: "🇦🇪", callingCode: "+971" },
   { code: "US", name: "United States", flag: "🇺🇸", callingCode: "+1" },
   { code: "GB", name: "United Kingdom", flag: "🇬🇧", callingCode: "+44" },
-  { code: "IN", name: "India", flag: "🇮🇳", callingCode: "+91" },
-  { code: "SA", name: "Saudi Arabia", flag: "🇸🇦", callingCode: "+966" },
-  { code: "PK", name: "Pakistan", flag: "🇵🇰", callingCode: "+92" },
-  { code: "EG", name: "Egypt", flag: "🇪🇬", callingCode: "+20" },
-  { code: "CA", name: "Canada", flag: "🇨🇦", callingCode: "+1" },
-  { code: "AU", name: "Australia", flag: "🇦🇺", callingCode: "+61" },
-  { code: "FR", name: "France", flag: "🇫🇷", callingCode: "+33" },
 ];
 
 const defaultStateData: StateData = {
@@ -67,7 +59,7 @@ export default function StateCreateEdit({
   isEdit = false,
   initialData,
 }: Props) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const navigate = useNavigate();
@@ -90,6 +82,14 @@ export default function StateCreateEdit({
     });
   };
 
+  const handleNext = () => {
+    // setIsOptionModalOpen(true);
+  };
+
+  const handleCancel = () => {
+    // setIsOptionModalOpen(false);
+  };
+
   const handleCountryChange = (value: string) => {
     setFormData({
       ...formData,
@@ -104,7 +104,6 @@ export default function StateCreateEdit({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("State form submitted:", formData);
-    // Add your submission logic here
   };
 
   const handleReset = () => {
@@ -117,239 +116,213 @@ export default function StateCreateEdit({
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div
-        className="container mx-auto px-4 py-6 flex-grow"
-        dir={i18n.language === "ar" ? "rtl" : "ltr"}
-      >
+    <div className="relative w-full">
+      {/* Container with full height minus external footer */}
+      <div className="flex flex-col h-[calc(100vh-160px)] overflow-hidden border rounded shadow bg-white dark:bg-gray-800">
         {/* Header */}
-        <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-4 mb-8">
-          <div className="flex gap-2 items-center">
-            <YoutubeButton videoId="your-video-id" />
+        <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 border-b px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <YoutubeButton videoId="PcVAyB3nDD4" />
             <h1 className="text-xl font-bold text-blue-400">
               {isEdit ? t("form.editingState") : t("form.creatingState")}
             </h1>
           </div>
-          <div className="flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 p-5 bg-blue-400 hover:bg-blue-600  text-white hover:text-white cursor-pointer rounded-full"
-              onClick={() => navigate("/states")}
-            >
-              {t("button.list")}
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            className="gap-2 bg-blue-400 hover:bg-blue-600 text-white rounded-full"
+            onClick={() => navigate("/states")}
+          >
+            {t("button.list")}
+          </Button>
         </div>
 
-        {/* Main Form */}
-        <form
-          ref={formRef}
-          onSubmit={handleSubmit}
-          className="bg-white rounded-lg shadow-sm border p-6 mb-6 dark:bg-gray-800 dark:border-gray-700"
-        >
-          {/* First Row: Name, Country, Code */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
-            {/* State Name - 4 columns */}
-            <div className="md:col-span-4 space-y-1">
-              <Label htmlFor="name">{t("form.name")}</Label>
-              <EditableInput
-                id="name"
-                name="name"
-                className="h-10"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder={t("form.namePlaceholder")}
-                onNext={() => {
-                  document.getElementById("countryCode")?.focus();
-                }}
-                onCancel={() => {
-                  setFormData({ ...formData, name: "" });
-                }}
-                required
-              />
-            </div>
-
-            {/* Country Dropdown - 4 columns */}
-            <div className="md:col-span-2 space-y-1">
-              <Label htmlFor="countryCode">{t("form.country")}</Label>
-              <Select
-                value={formData.countryCode}
-                onValueChange={handleCountryChange}
-              >
-                <SelectTrigger className="h-10" id="countryCode">
-                  <SelectValue placeholder={t("form.selectCountry")}>
-                    {formData.countryCode && getSelectedCountry() ? (
-                      <div className="flex items-center gap-2">
-                        <span>{getSelectedCountry()?.flag}</span>
-                        <span>{getSelectedCountry()?.name}</span>
-                      </div>
-                    ) : null}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {MOCK_COUNTRIES.map((country) => (
-                    <SelectItem key={country.code} value={country.code}>
-                      <div className="flex items-center gap-2">
-                        <span>{country.flag}</span>
-                        <span>{country.name}</span>
-                        <span className="text-muted-foreground ml-2">
-                          {country.callingCode}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* State Code - 4 columns */}
-            <div className="md:col-span-6 space-y-1">
-              <Label htmlFor="code">{t("form.description")}</Label>
-              <EditableInput
-                id="code"
-                name="code"
-                className="h-10"
-                value={formData.code}
-                onChange={handleChange}
-                placeholder={t("form.descriptionPlaceholder")}
-                onNext={() => {
-                  document.getElementById("isActive")?.focus();
-                }}
-                onCancel={() => {
-                  setFormData({ ...formData, code: "" });
-                }}
-                required
-              />
-            </div>
-          </div>
-
-          {/* Second Row: Active, Draft, Delete, Default */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 items-center">
-            {/* Active Switch - 3 columns */}
-            <div className="md:col-span-3 flex items-center gap-4">
-              <Label htmlFor="isActive" className="whitespace-nowrap">
-                {t("common.active")}
-              </Label>
-              <Switch
-                id="isActive"
-                name="isActive"
-                className="data-[state=checked]:bg-blue-400"
-                checked={formData.isActive}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, isActive: checked })
-                }
-              />
-            </div>
-
-            {/* Draft Switch - 3 columns */}
-            <div className="md:col-span-3 flex items-center gap-4">
-              <Label htmlFor="isDraft" className="whitespace-nowrap">
-                {t("common.draft")}
-              </Label>
-              <Switch
-                id="isDraft"
-                name="isDraft"
-                className="data-[state=checked]:bg-blue-400"
-                checked={formData.isDraft}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, isDraft: checked })
-                }
-              />
-            </div>
-
-            {/* Delete Button - 3 columns (only in edit mode) */}
-            {isEdit && (
-              <div className="md:col-span-3 flex items-center gap-4">
-                <Label htmlFor="isDeleted" className="whitespace-nowrap">
-                  {t("button.delete")}
+        {/* Scrollable Form Section */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+          <form ref={formRef} onSubmit={handleSubmit}>
+            {/* First Row: Name, Country, Code */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-4 space-y-2">
+                <Label htmlFor="name" className="block">
+                  {t("form.name")}
                 </Label>
-                <Switch
-                  id="isDeleted"
-                  name="isDeleted"
-                  className="data-[state=checked]:bg-blue-400"
-                  checked={formData.isDeleted}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDeleted: checked })
-                  }
+                <EditableInput
+                  id="name"
+                  name="name"
+                  className="w-full h-10"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder={t("form.namePlaceholder")}
+                  onNext={handleNext}
+                  onCancel={handleCancel}
+                  required
                 />
               </div>
-            )}
 
-            {/* Default Switch - 3 columns */}
-            <div className="md:col-span-3 flex items-center gap-4">
-              <Label htmlFor="isDefault" className="whitespace-nowrap">
-                {t("common.default")}
-              </Label>
-              <Switch
-                id="isDefault"
-                name="isDefault"
-                className="data-[state=checked]:bg-blue-400"
-                checked={formData.isDefault}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, isDefault: checked })
-                }
-              />
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="countryCode" className="block">
+                  {t("form.country")}
+                </Label>
+                <Select
+                  value={formData.countryCode}
+                  onValueChange={handleCountryChange}
+                >
+                  <SelectTrigger className="h-10" id="countryCode">
+                    <SelectValue placeholder={t("form.selectCountry")}>
+                      {formData.countryCode && getSelectedCountry() ? (
+                        <div className="flex items-center gap-2">
+                          <span>{getSelectedCountry()?.flag}</span>
+                          <span>{getSelectedCountry()?.name}</span>
+                        </div>
+                      ) : null}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MOCK_COUNTRIES.map((country) => (
+                      <SelectItem key={country.code} value={country.code}>
+                        <div className="flex items-center gap-2">
+                          <span>{country.flag}</span>
+                          <span>{country.name}</span>
+                          <span className="text-muted-foreground ml-2">
+                            {country.callingCode}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="md:col-span-6 space-y-2">
+                <Label htmlFor="code" className="block">
+                  {t("form.description")}
+                </Label>
+                <EditableInput
+                  id="code"
+                  name="code"
+                  className="w-full h-10"
+                  value={formData.code}
+                  onChange={handleChange}
+                  placeholder={t("form.descriptionPlaceholder")}
+                  onNext={handleNext}
+                  onCancel={handleCancel}
+                  required
+                />
+              </div>
             </div>
-          </div>
-        </form>
-      </div>
 
-      {/* Footer */}
-      <div className="sticky bottom-0 bg-white border mx-4 py-4 px-6 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-        <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-          {/* Left side - 8 columns */}
-          <div className="md:col-span-8 flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <Switch
-                id="keepCreating"
-                checked={keepCreating}
-                className="data-[state=checked]:bg-blue-400"
-                onCheckedChange={(checked) => setKeepCreating(!!checked)}
-              />
-              <Label
-                htmlFor="keepCreating"
-                className="cursor-pointer whitespace-nowrap"
+            {/* Second Row: Active, Draft, Delete, Default */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+              <div className="md:col-span-3 space-y-2">
+                <Label htmlFor="isActive" className="block">
+                  {t("common.active")}
+                </Label>
+                <div className="h-10 flex items-center">
+                  <Switch
+                    id="isActive"
+                    name="isActive"
+                    className="data-[state=checked]:bg-blue-400"
+                    checked={formData.isActive}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, isActive: checked })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="md:col-span-3 space-y-2">
+                <Label htmlFor="isDraft" className="block">
+                  {t("common.draft")}
+                </Label>
+                <div className="h-10 flex items-center">
+                  <Switch
+                    id="isDraft"
+                    name="isDraft"
+                    className="data-[state=checked]:bg-blue-400"
+                    checked={formData.isDraft}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, isDraft: checked })
+                    }
+                  />
+                </div>
+              </div>
+
+              {isEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <Label htmlFor="isDeleted" className="block">
+                    {t("button.delete")}
+                  </Label>
+                  <div className="h-10 flex items-center">
+                    <Switch
+                      id="isDeleted"
+                      name="isDeleted"
+                      className="data-[state=checked]:bg-blue-400"
+                      checked={formData.isDeleted}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, isDeleted: checked })
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="md:col-span-3 space-y-2">
+                <Label htmlFor="isDefault" className="block">
+                  {t("common.default")}
+                </Label>
+                <div className="h-10 flex items-center">
+                  <Switch
+                    id="isDefault"
+                    name="isDefault"
+                    className="data-[state=checked]:bg-blue-400"
+                    checked={formData.isDefault}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, isDefault: checked })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        {/* Fixed Bottom Button Bar */}
+        <div className="sticky bottom-0 z-30 bg-white dark:bg-gray-800 border-t px-6 py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex gap-6 items-center">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={keepCreating}
+                  className="data-[state=checked]:bg-blue-400"
+                  onCheckedChange={setKeepCreating}
+                />
+                <span className="dark:text-gray-200">{t("button.keep")}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch className="data-[state=checked]:bg-blue-400" />
+                <span className="dark:text-gray-200">Print</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch className="data-[state=checked]:bg-blue-400" />
+                <span className="dark:text-gray-200">PDF</span>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                className="gap-2 text-white bg-blue-400 hover:bg-blue-600 rounded-full"
+                onClick={handleReset}
               >
-                {t("button.keep")}
-              </Label>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Switch id="print" className="data-[state=checked]:bg-blue-400" />
-              <Label
-                htmlFor="print"
-                className="cursor-pointer whitespace-nowrap"
+                {t("button.reset")}
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2 text-white bg-blue-400 hover:bg-blue-600 rounded-full"
+                onClick={() => formRef.current?.requestSubmit()}
               >
-                {t("button.print")}
-              </Label>
+                {t("button.submit")}
+              </Button>
             </div>
-
-            <div className="flex items-center gap-2">
-              <Switch id="pdf" className="data-[state=checked]:bg-blue-400" />
-              <Label htmlFor="pdf" className="cursor-pointer whitespace-nowrap">
-                {t("button.pdf")}
-              </Label>
-            </div>
-          </div>
-
-          {/* Right side - 4 columns */}
-          <div className="md:col-span-4 flex justify-end gap-4">
-            <Button
-              variant="outline"
-              onClick={handleReset}
-              type="button"
-              className="rounded-full cursor-pointer hover:bg-blue-600 hover:text-white"
-            >
-              {t("button.reset")}
-            </Button>
-            <Button
-              type="submit"
-              className="bg-blue-300 hover:bg-blue-600 text-white rounded-full cursor-pointer"
-              onClick={() => formRef.current?.requestSubmit()}
-            >
-              {t("button.submit")}
-            </Button>
           </div>
         </div>
       </div>

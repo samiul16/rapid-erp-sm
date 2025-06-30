@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   ArrowDown,
@@ -26,6 +27,7 @@ import {
   getSortedRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
+  type SortingFnOption,
 } from "@tanstack/react-table";
 import {
   DropdownMenu,
@@ -38,149 +40,54 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Filter, X, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-// import { EditableStatusCell } from "./EditableStatusCell";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-import { ExportComponent } from "./ListExportComponent";
-import FilterComponent from "./ListFilterComponent";
-import ColumnVisibilityPanel from "./ListVisibilityComponent";
+import { ExportComponent } from "@/pages/Country/ListExportComponent";
+import FilterComponent from "@/pages/Country/ListFilterComponent";
+import ColumnVisibilityPanel from "@/pages/Country/ListVisibilityComponent";
+import { useNavigate } from "react-router-dom";
+import { Tooltip } from "@mantine/core";
 
-type Country = {
+type User = {
   id: string;
-  title: string;
-  code: string;
-  callingCode: string;
-  rating: number;
+  name: string;
+  email: string;
   status: "active" | "inactive" | "pending";
   createdAt: string;
-  currency: string;
+  deletedAt: string | null;
+  draftedAt: string | null;
+  meta: {
+    isFixed?: boolean;
+    fixedPosition?: "left" | "right";
+  };
+  actionMessage: string;
 };
 
-const mockCountries = [
-  {
-    id: "0",
-    title: "Bangladesh",
-    code: "BD",
-    callingCode: "+880",
-    rating: 4,
-    status: "active",
-    createdAt: "2023-01-15",
-    currency: "USD",
-  },
-  {
-    id: "1",
-    title: "United States",
-    code: "US",
-    callingCode: "+1",
-    rating: 4,
-    status: "active",
-    createdAt: "2023-01-15",
-    currency: "USD",
-  },
-  {
-    id: "2",
-    title: "Canada",
-    code: "CA",
-    callingCode: "+1",
-    rating: 5,
-    status: "active",
-    createdAt: "2023-02-20",
-    currency: "CAD",
-  },
-  {
-    id: "3",
-    title: "United Kingdom",
-    code: "UK",
-    callingCode: "+44",
-    rating: 4,
-    status: "pending",
-    createdAt: "2023-03-10",
-    currency: "GBP",
-  },
-  {
-    id: "4",
-    title: "Japan",
-    code: "JP",
-    callingCode: "+81",
-    rating: 3,
-    status: "active",
-    createdAt: "2023-04-05",
-    currency: "JPY",
-  },
-  {
-    id: "5",
-    title: "Germany",
-    code: "DE",
-    callingCode: "+49",
-    rating: 4,
-    status: "inactive",
-    createdAt: "2023-05-12",
-    currency: "EUR",
-  },
-  {
-    id: "6",
-    title: "France",
-    code: "FR",
-    callingCode: "+33",
-    rating: 3,
-    status: "active",
-    createdAt: "2023-06-18",
-    currency: "EUR",
-  },
-  {
-    id: "7",
-    title: "Australia",
-    code: "AU",
-    callingCode: "+61",
-    rating: 5,
-    status: "pending",
-    createdAt: "2023-07-22",
-    currency: "AUD",
-  },
-  {
-    id: "8",
-    title: "Brazil",
-    code: "BR",
-    callingCode: "+55",
-    rating: 2,
-    status: "inactive",
-    createdAt: "2023-08-30",
-    currency: "BRL",
-  },
-  {
-    id: "9",
-    title: "India",
-    code: "IN",
-    callingCode: "+91",
-    rating: 3,
-    status: "active",
-    createdAt: "2023-09-05",
-    currency: "INR",
-  },
-  {
-    id: "10",
-    title: "China",
-    code: "CN",
-    callingCode: "+86",
-    rating: 4,
-    status: "active",
-    createdAt: "2023-10-15",
-    currency: "CNY",
-  },
-];
-
-export default function CountryDataTable({
+export default function CommonDataTable({
   viewMode,
   setViewMode,
+  componentColumns,
+  columnData,
+  fixedColumns = [], // New prop for fixed columns
 }: {
-  viewMode: "grid" | "list";
-  setViewMode: (viewMode: "grid" | "list") => void;
+  viewMode: string;
+  setViewMode: (viewMode: string) => void;
+  componentColumns: any;
+  columnData: any[];
+  fixedColumns?: string[]; // Array of column accessorKeys to be fixed
 }) {
-  const [data, setData] = useState<Country[]>(mockCountries as Country[]);
+  const [data, setData] = useState(columnData);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = useState({});
   const [editingCell, setEditingCell] = useState<{
@@ -193,16 +100,58 @@ export default function CountryDataTable({
     rowIndex: -1,
     columnId: "",
   });
-  const tableRef = useRef<HTMLTableElement>(null);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
   const [showExport, setShowExport] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const { t } = useTranslation();
   const [showVisibility, setShowVisibility] = useState(false);
+  const navigate = useNavigate();
 
-  const columns = useMemo<ColumnDef<Country>[]>(
-    () => [
+  // Helper function to calculate fixed column position
+  const getFixedColumnPosition = useCallback(
+    (accessorKey: string, columns: any[]) => {
+      let position = 60; // Start after select column (which is always first and fixed)
+
+      // If this is the select column, return 0
+      if (accessorKey === "select") return 0;
+
+      // If this is the actions column and it's right-fixed, return 0 (it will be positioned from right)
+      if (accessorKey === "actions") return 0;
+
+      const fixedColumnIndex = fixedColumns.indexOf(accessorKey);
+      if (fixedColumnIndex === -1) return 0; // Not a fixed column
+
+      // Calculate position by summing widths of previous fixed columns
+      for (let i = 0; i < fixedColumnIndex; i++) {
+        const col = columns.find((c: any) => c.accessorKey === fixedColumns[i]);
+        position += col?.size || 150;
+      }
+
+      return position;
+    },
+    [fixedColumns]
+  );
+
+  // Calculate total width of left-fixed columns (excluding actions column)
+  // const getLeftFixedColumnsWidth = useCallback(() => {
+  //   let width = 60; // Base width for select column
+
+  //   fixedColumns.forEach((accessorKey) => {
+  //     const col = componentColumns.find(
+  //       (c: any) => c.accessorKey === accessorKey
+  //     );
+  //     if (col) {
+  //       width += col.size || 150;
+  //     }
+  //   });
+
+  //   return width;
+  // }, [componentColumns, fixedColumns]);
+
+  const columns = useMemo(() => {
+    const columns: ColumnDef<User>[] = [
       {
         id: "select",
         header: ({ table }) => {
@@ -226,7 +175,7 @@ export default function CountryDataTable({
                     table.toggleAllPageRowsSelected(!!value)
                   }
                   aria-label="Select all"
-                  className="w-4 h-4 cursor-pointer"
+                  className="w-4 h-4 cursor-pointer data-[state=checked]:bg-blue-500 data-[state=checked]:text-blue-500"
                 />
               )}
             </div>
@@ -235,181 +184,131 @@ export default function CountryDataTable({
         cell: ({ row, table }) => (
           <div
             className={`
-              ${
-                table.getIsAllPageRowsSelected() || row.getIsSelected()
-                  ? "opacity-100"
-                  : "opacity-0 group-hover:opacity-100"
-              }
-              transition-opacity
-            `}
+                ${
+                  table.getIsAllPageRowsSelected() || row.getIsSelected()
+                    ? "opacity-100"
+                    : "opacity-100"
+                }
+                transition-opacit
+              `}
           >
             <Checkbox
               checked={row.getIsSelected()}
+              className="w-4 h-4 cursor-pointer data-[state=checked]:bg-blue-500 data-[state=checked]:text-white"
               onCheckedChange={(value) => row.toggleSelected(!!value)}
               aria-label="Select row"
             />
           </div>
         ),
-        size: 40,
-      },
-      {
-        accessorKey: "title",
-        header: ({ column }) => (
-          <ColumnFilterHeader
-            column={column}
-            title="Title"
-            options={[...new Set(data.map((item) => item.title))]}
-          />
-        ),
-        cell: (info) => (
-          <EditableCell
-            info={info}
-            editingCell={editingCell}
-            setEditingCell={setEditingCell}
-            editValue={editValue}
-            setEditValue={setEditValue}
-            handleEdit={handleEdit}
-            selectedCell={selectedCell}
-            setSelectedCell={setSelectedCell}
-          />
-        ),
-        filterFn: (row, columnId, filterValue) => {
-          if (!filterValue || filterValue.length === 0) return true;
-          const cellValue = row.getValue(columnId) as string;
-          return filterValue.some((filterVal: string) =>
-            cellValue.toLowerCase().includes(filterVal.toLowerCase())
-          );
+        size: 60,
+        minSize: 60,
+        maxSize: 60,
+        meta: {
+          isFixed: true,
+          fixedPosition: "left",
         },
       },
-      {
-        accessorKey: "code",
-        header: ({ column }) => (
-          <ColumnFilterHeader
-            column={column}
-            title="Code"
-            options={[...new Set(data.map((item) => item.code))]}
-          />
-        ),
-        cell: (info) => (
-          <EditableCell
-            info={info}
-            editingCell={editingCell}
-            setEditingCell={setEditingCell}
-            editValue={editValue}
-            setEditValue={setEditValue}
-            handleEdit={handleEdit}
-            selectedCell={selectedCell}
-            setSelectedCell={setSelectedCell}
-          />
-        ),
-        filterFn: (row, columnId, filterValue) => {
-          if (!filterValue || filterValue.length === 0) return true;
-          const cellValue = row.getValue(columnId) as string;
-          return filterValue.includes(cellValue);
-        },
-      },
-      {
-        accessorKey: "callingCode",
-        header: ({ column }) => (
-          <ColumnFilterHeader
-            column={column}
-            title="Calling Code"
-            options={[...new Set(data.map((item) => item.callingCode))]}
-          />
-        ),
-        cell: (info) => (
-          <EditableCell
-            info={info}
-            editingCell={editingCell}
-            setEditingCell={setEditingCell}
-            editValue={editValue}
-            setEditValue={setEditValue}
-            handleEdit={handleEdit}
-            selectedCell={selectedCell}
-            setSelectedCell={setSelectedCell}
-          />
-        ),
-        filterFn: (row, columnId, filterValue) => {
-          if (!filterValue || filterValue.length === 0) return true;
-          const cellValue = row.getValue(columnId) as string;
-          return filterValue.includes(cellValue);
-        },
-      },
-      {
-        accessorKey: "status",
-        header: ({ column }) => (
-          <ColumnFilterHeader
-            column={column}
-            title="Status"
-            options={[...new Set(data.map((item) => item.status))]}
-          />
-        ),
-        cell: (info) => (
-          <EditableCell
-            info={info}
-            editingCell={editingCell}
-            setEditingCell={setEditingCell}
-            editValue={editValue}
-            setEditValue={setEditValue}
-            handleEdit={handleEdit}
-            selectedCell={selectedCell}
-            setSelectedCell={setSelectedCell}
-          />
-        ),
-        filterFn: (row, columnId, filterValue) => {
-          if (!filterValue || filterValue.length === 0) return true;
-          const cellValue = row.getValue(columnId) as string;
-          return filterValue.includes(cellValue);
-        },
-      },
-      {
-        accessorKey: "createdAt",
-        header: ({ column }) => (
-          <ColumnFilterHeader
-            column={column}
-            title="Created"
-            options={[...new Set(data.map((item) => item.createdAt))]}
-          />
-        ),
-        cell: (info) => (
-          <EditableCell
-            info={info}
-            editingCell={editingCell}
-            setEditingCell={setEditingCell}
-            editValue={editValue}
-            setEditValue={setEditValue}
-            handleEdit={handleEdit}
-            selectedCell={selectedCell}
-            setSelectedCell={setSelectedCell}
-          />
-        ),
-        filterFn: (row, columnId, filterValue) => {
-          if (!filterValue || filterValue.length === 0) return true;
-          const cellValue = new Date(row.getValue(columnId) as string)
-            .toISOString()
-            .split("T")[0];
-          return filterValue.includes(cellValue);
-        },
-        sortingFn: "datetime",
-      },
-      {
-        id: "actions",
-        cell: () => (
+    ];
+
+    componentColumns.forEach((componentColumn: any) => {
+      const isFixed = fixedColumns.includes(componentColumn.accessorKey);
+
+      if (componentColumn.accessorKey === "status") {
+        columns.push({
+          accessorKey: componentColumn.accessorKey,
+          header: ({ column }) => (
+            <ColumnFilterHeader
+              column={column}
+              title={componentColumn.title}
+              options={componentColumn.options}
+            />
+          ),
+          cell: (info) => (
+            <StatusEditableCell
+              info={info}
+              editingCell={editingCell}
+              setEditingCell={setEditingCell}
+              editValue={editValue}
+              setEditValue={setEditValue}
+              handleEdit={handleEdit}
+              selectedCell={selectedCell}
+              setSelectedCell={setSelectedCell}
+            />
+          ),
+          filterFn: componentColumn.filterFn,
+          sortingFn: componentColumn.sortingFn as SortingFnOption<User>,
+          size: componentColumn.size || 120,
+          minSize: componentColumn.minSize || 80,
+          meta: {
+            isFixed,
+            fixedPosition: isFixed ? "left" : undefined,
+          },
+        });
+      } else {
+        columns.push({
+          accessorKey: componentColumn.accessorKey,
+          header: ({ column }) => (
+            <ColumnFilterHeader
+              column={column}
+              title={componentColumn.title}
+              options={componentColumn.options}
+            />
+          ),
+          cell: (info) => (
+            <EditableCell
+              info={info}
+              editingCell={editingCell}
+              setEditingCell={setEditingCell}
+              editValue={editValue}
+              setEditValue={setEditValue}
+              handleEdit={handleEdit}
+              selectedCell={selectedCell}
+              setSelectedCell={setSelectedCell}
+            />
+          ),
+          filterFn: componentColumn.filterFn,
+          sortingFn: componentColumn.sortingFn as SortingFnOption<User>,
+          size: componentColumn.size || 150,
+          minSize: componentColumn.minSize || 100,
+          meta: {
+            isFixed,
+            fixedPosition: isFixed ? "left" : undefined,
+          },
+        });
+      }
+    });
+
+    columns.push({
+      id: "actions",
+      header: "Actions",
+      cell: (info) => (
+        <div className="flex items-center justify-between">
+          <div className="text-gray-600 pr-5">
+            {info.row.original.actionMessage}
+          </div>
           <div className="opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleDelete()}
-              className="bg-blue-300 hover:bg-blue-600 text-white rounded-full"
+              onClick={() => goToDetails("1")}
+              className="bg-blue-300 hover:bg-blue-600 text-white rounded-full cursor-pointer"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-        ),
+        </div>
+      ),
+      size: 100,
+      minSize: 80,
+      maxSize: 120,
+      meta: {
+        isFixed: true,
+        fixedPosition: "right", // New property for right-fixed columns
       },
-    ],
-    [data, editingCell, editValue, selectedCell]
-  );
+    });
+
+    return columns;
+  }, [data, editingCell, editValue, selectedCell, fixedColumns]);
 
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -437,6 +336,7 @@ export default function CountryDataTable({
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    columnResizeMode: "onChange",
   });
 
   const [allColumnsVisible, setAllColumnsVisible] = useState(
@@ -529,12 +429,12 @@ export default function CountryDataTable({
   );
 
   useEffect(() => {
-    const tableElement = tableRef.current as HTMLTableElement;
-    if (tableElement) {
-      tableElement.addEventListener("keydown", handleKeyDown);
-      tableElement.setAttribute("tabindex", "0"); // Make table focusable
+    const tableContainer = tableContainerRef.current;
+    if (tableContainer) {
+      tableContainer.addEventListener("keydown", handleKeyDown);
+      tableContainer.setAttribute("tabindex", "0"); // Make table focusable
       return () => {
-        tableElement.removeEventListener("keydown", handleKeyDown);
+        tableContainer.removeEventListener("keydown", handleKeyDown);
       };
     }
   }, [handleKeyDown]);
@@ -559,15 +459,16 @@ export default function CountryDataTable({
       setSelectedCell({ rowIndex, columnId });
     }
 
+    // Refocus the table after editing
     setTimeout(() => {
-      if (tableRef.current) {
-        tableRef.current.focus();
+      if (tableContainerRef.current) {
+        tableContainerRef.current.focus();
       }
     }, 0);
   };
 
-  const handleDelete = () => {
-    // setData((prev) => prev.filter((row) => row.id !== id));
+  const goToDetails = (id: string) => {
+    navigate(`/countries/${id}`);
   };
 
   const handleBulkDelete = () => {
@@ -589,15 +490,16 @@ export default function CountryDataTable({
   const selectedRows = table.getSelectedRowModel().rows;
 
   return (
-    <div className="px-4 py-3 h-full flex flex-col">
-      <div className="pb-4">
+    <div className="h-full flex flex-col px-4 py-3">
+      {/* Header Controls - Fixed height */}
+      <div className="flex-shrink-0 pb-4 h-[7vh]">
         <div className="grid grid-cols-12 gap-4 items-center">
           {/* Left column - View toggle, Import, and Bulk actions */}
           <div className="col-span-4 flex items-center gap-2">
             <Button
               variant="outline"
               onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-              className="gap-2 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full min-w-[80px] sm:min-w-[100px]"
+              className="gap-2 cursor-pointer hover:bg-blue-500 hover:text-white rounded-full  min-w-[60px] sm:min-w-[80px]"
             >
               {viewMode === "grid" ? (
                 <>
@@ -614,13 +516,13 @@ export default function CountryDataTable({
 
             <Button
               variant="outline"
-              className={`gap-2 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full ${
-                showVisibility ? "bg-blue-700 text-white" : ""
+              className={`gap-2 cursor-pointer hover:bg-blue-500 hover:text-white rounded-full ${
+                showVisibility ? "bg-blue-400 text-white" : ""
               }`}
               onClick={() => {
-                setShowVisibility(true);
-                setShowFilter(false);
+                setShowVisibility(!showVisibility);
                 setShowExport(false);
+                setShowFilter(false);
               }}
             >
               Visibility
@@ -630,7 +532,7 @@ export default function CountryDataTable({
             {selectedRows.length > 0 && (
               <div className="flex items-center space-x-2 ml-2">
                 <Button
-                  className="disabled:opacity-500 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full"
+                  className="disabled:opacity-500 cursor-pointer text-red-600"
                   variant="outline"
                   size="sm"
                   onClick={handleBulkDelete}
@@ -639,7 +541,7 @@ export default function CountryDataTable({
                   Delete
                 </Button>
                 <Button
-                  className="disabled:opacity-500 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full"
+                  className="disabled:opacity-500 cursor-pointer hover:bg-blue-500 hover:text-white rounded-full"
                   variant="outline"
                   size="sm"
                   onClick={handleBulkUpdate}
@@ -652,22 +554,24 @@ export default function CountryDataTable({
 
           {/* Middle column - Search with mic */}
           <div className="col-span-4 flex justify-center">
-            <div className="w-full max-w-md">
+            <div className="w-full max-w-xs mx-auto">
               <div className="relative flex items-center rounded-full">
-                <Search className="absolute left-3 h-4 w-4 text-gray-400 text-blue-500" />
+                <Search className="absolute left-3 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search countries..."
+                  placeholder="Search..."
                   className="pl-9 pr-9 w-full rounded-full"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="absolute right-2 h-6 w-6 rounded-full cursor-pointer p-0"
-                >
-                  <Mic className="h-4 w-4  text-blue-400" />
-                </Button>
+                <Tooltip label="Search by voice">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute right-2 h-6 w-6 rounded-full cursor-pointer p-0"
+                  >
+                    <Mic className="h-4 w-4 text-blue-400" />
+                  </Button>
+                </Tooltip>
               </div>
             </div>
           </div>
@@ -682,12 +586,13 @@ export default function CountryDataTable({
 
             <Button
               variant="outline"
-              className={`gap-2 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full ${
-                showExport ? "bg-blue-700 text-white" : ""
+              className={`gap-2 cursor-pointer hover:bg-blue-500 hover:text-white rounded-full ${
+                showExport ? "bg-blue-400 text-white" : ""
               }`}
               onClick={() => {
                 setShowExport(!showExport);
                 setShowFilter(false);
+                setShowVisibility(false);
               }}
             >
               <Download className="h-4 w-4" />
@@ -696,8 +601,8 @@ export default function CountryDataTable({
 
             <Button
               variant="outline"
-              className={`gap-2 cursor-pointer bg-blue-400 hover:bg-blue-700 text-white hover:text-white rounded-full ${
-                showFilter ? "bg-blue-700 text-white" : ""
+              className={`gap-2 cursor-pointer hover:bg-blue-500 hover:text-white rounded-full ${
+                showFilter ? "bg-blue-400 text-white" : ""
               }`}
               onClick={() => {
                 setShowFilter(!showFilter);
@@ -710,111 +615,169 @@ export default function CountryDataTable({
           </div>
         </div>
       </div>
-      <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 overflow-auto">
-            <div
-              ref={tableRef}
-              className="relative h-full min-w-full focus:outline-none"
-              tabIndex={0}
-            >
-              <div className="inline-block min-w-full align-middle">
-                <table className="min-w-full dark:bg-gray-900">
-                  <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <tr key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => (
-                          <th
-                            key={header.id}
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0"
-                            style={{
-                              width: header.getSize(),
-                              cursor: header.column.getCanSort()
-                                ? "pointer"
-                                : "default",
-                              backgroundColor: "inherit",
-                            }}
-                          >
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                          </th>
-                        ))}
-                      </tr>
-                    ))}
-                  </thead>
+      {/* Main Content Area - Flexible height */}
+      <div className="flex-1 flex overflow-hidden min-h-0">
+        {/* Table Container - Takes remaining space */}
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+          {/* Table with scrollable body */}
+          <div
+            ref={tableContainerRef}
+            className="flex-1 overflow-auto scroll-smooth smooth-scroll focus:outline-none border border-gray-200 rounded-lg min-h-0"
+            tabIndex={0}
+            style={{
+              height: "calc(100vh - 200px)", // Adjust based on your footer height and other elements
+              minHeight: "200px", // Minimum height for small screens
+            }}
+          >
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-20">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      const isFixed = header.column.columnDef.meta?.isFixed;
+                      const fixedPosition =
+                        header.column.columnDef.meta?.fixedPosition;
+                      const leftPosition = getFixedColumnPosition(
+                        header.id,
+                        componentColumns
+                      );
 
-                  <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900">
-                    {table.getRowModel().rows.map((row) => (
-                      <tr
-                        key={row.id}
-                        className={`group ${
-                          row.getIsSelected()
-                            ? "bg-gray-100 dark:bg-gray-800"
-                            : ""
-                        }`}
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <td
-                            key={cell.id}
-                            className={`px-6 py-4 whitespace-nowrap ${
-                              isCellSelected(row.index, cell.column.id)
-                                ? "ring-2 ring-blue-500 ring-inset bg-blue-50"
-                                : "hover:bg-gray-100 dark:hover:bg-gray-800"
-                            }`}
-                            data-row-id={row.id}
-                            data-col-id={cell.column.id}
-                            onClick={(e) => {
-                              // Only handle single click if it's not part of a double-click
-                              if (e.detail === 1) {
-                                handleCellClick(row.index, cell.column.id);
-                              }
-                            }}
-                            onDoubleClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              // Handle double-click for editable cells
-                              if (
-                                cell.column.id !== "select" &&
-                                cell.column.id !== "actions"
-                              ) {
-                                setSelectedCell({
-                                  rowIndex: row.index,
-                                  columnId: cell.column.id,
-                                });
-                                setEditingCell({
-                                  rowId: row.id,
-                                  columnId: cell.column.id,
-                                });
-                                setEditValue(row.getValue(cell.column.id));
-                              }
-                            }}
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <td
-                        colSpan={table.getAllColumns().length}
-                        className="sticky bottom-0 bg-white dark:bg-gray-900 pt-2 border-t"
-                      >
-                        <PaginationControls table={table} />
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
+                      return (
+                        <th
+                          key={header.id}
+                          className={`px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200 bg-gray-50 dark:bg-gray-900 ${
+                            isFixed ? `sticky z-30 shadow-md gray-300` : ""
+                          }`}
+                          style={{
+                            width: `${header.getSize()}px`,
+                            minWidth: `${
+                              header.column.columnDef.minSize ||
+                              header.getSize()
+                            }px`,
+                            maxWidth: `${
+                              header.column.columnDef.maxSize || "none"
+                            }`,
+                            ...(isFixed && {
+                              [fixedPosition === "right" ? "right" : "left"]:
+                                header.id === "select"
+                                  ? "0px"
+                                  : header.id === "actions" &&
+                                    fixedPosition === "right"
+                                  ? "0px"
+                                  : `${leftPosition}px`,
+                            }),
+                          }}
+                        >
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                        </th>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900">
+                {table.getRowModel().rows.map((row) => (
+                  <tr
+                    key={row.id}
+                    className={`group hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                      row.getIsSelected() ? "bg-gray-100 dark:bg-gray-800" : ""
+                    }`}
+                  >
+                    {row.getVisibleCells().map((cell) => {
+                      const isFixed = cell.column.columnDef.meta?.isFixed;
+                      const fixedPosition =
+                        cell.column.columnDef.meta?.fixedPosition;
+                      const leftPosition = getFixedColumnPosition(
+                        cell.column.id,
+                        componentColumns
+                      );
+
+                      return (
+                        <td
+                          key={cell.id}
+                          className={`px-4 py-3 whitespace-nowrap border-b border-gray-200 ${
+                            isCellSelected(row.index, cell.column.id)
+                              ? "ring-2 ring-blue-500 ring-inset bg-blue-50"
+                              : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                          } ${
+                            isFixed
+                              ? `sticky z-10 bg-white dark:bg-gray-900 shadow-md border-b border-gray-200 ${
+                                  row.getIsSelected()
+                                    ? "bg-gray-100 dark:bg-gray-800"
+                                    : ""
+                                }`
+                              : ""
+                          }`}
+                          style={{
+                            width: `${cell.column.getSize()}px`,
+                            minWidth: `${
+                              cell.column.columnDef.minSize ||
+                              cell.column.getSize()
+                            }px`,
+                            maxWidth: `${
+                              cell.column.columnDef.maxSize || "none"
+                            }`,
+                            ...(isFixed && {
+                              [fixedPosition === "right" ? "right" : "left"]:
+                                cell.column.id === "select"
+                                  ? "0px"
+                                  : cell.column.id === "actions" &&
+                                    fixedPosition === "right"
+                                  ? "0px"
+                                  : `${leftPosition}px`,
+                            }),
+                          }}
+                          data-row-id={row.id}
+                          data-col-id={cell.column.id}
+                          onClick={(e) => {
+                            // Only handle single click if it's not part of a double-click
+                            if (e.detail === 1) {
+                              handleCellClick(row.index, cell.column.id);
+                            }
+                          }}
+                          onDoubleClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            // Handle double-click for editable cells
+                            if (
+                              cell.column.id !== "select" &&
+                              cell.column.id !== "actions"
+                            ) {
+                              setSelectedCell({
+                                rowIndex: row.index,
+                                columnId: cell.column.id,
+                              });
+                              setEditingCell({
+                                rowId: row.id,
+                                columnId: cell.column.id,
+                              });
+                              setEditValue(row.getValue(cell.column.id));
+                            }
+                          }}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Footer - Fixed at bottom */}
+          <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-t">
+            <PaginationControls table={table} />
           </div>
         </div>
+
+        {/* Side Panels */}
         {showExport && (
           <div className="w-72 flex-shrink-0 border-l bg-white dark:bg-gray-800">
             <ExportComponent
@@ -895,11 +858,11 @@ function ColumnFilterHeader({
 
   return (
     <div className="flex items-center gap-1 group">
-      <span>{title}</span>
+      <span className="truncate">{title}</span>
 
       <button
         onClick={toggleSorting}
-        className={`p-1 rounded transition-opacity ${
+        className={`p-1 rounded transition-opacity flex-shrink-0 ${
           sortDirection
             ? "opacity-100 bg-blue-100 text-blue-600"
             : "opacity-0 group-hover:opacity-100 text-gray-500 hover:bg-gray-100"
@@ -915,7 +878,7 @@ function ColumnFilterHeader({
       </button>
 
       <div
-        className={`${
+        className={`flex-shrink-0 ${
           isFilterOpen || selectedOptions.length > 0
             ? "opacity-100"
             : "opacity-0 group-hover:opacity-100"
@@ -967,7 +930,7 @@ function ColumnFilterHeader({
             </DropdownMenuCheckboxItem>
 
             {/* Options List */}
-            <div className="max-h-60 overflow-y-auto">
+            <div className="max-h-60 overflow-y-auto scroll-smooth smooth-scroll">
               {filteredOptions.map((option) => {
                 return (
                   <DropdownMenuCheckboxItem
@@ -999,8 +962,8 @@ function ColumnFilterHeader({
 
       {/* Current filter indicator - always visible when active */}
       {selectedOptions.length > 0 && (
-        <span className="ml-1 text-xs text-blue-500">
-          {selectedOptions.length} selected
+        <span className="ml-1 text-xs text-blue-500 flex-shrink-0">
+          {selectedOptions.length}
         </span>
       )}
     </div>
@@ -1068,11 +1031,12 @@ function EditableCell({
     console.log(rowId, columnId);
     const columnsOrder = [
       "select",
-      "title",
-      "code",
-      "callingCode",
+      "name",
+      "email",
       "status",
       "createdAt",
+      "deletedAt",
+      "draftedAt",
       "actions",
     ];
     const currentIndex = columnsOrder.indexOf(columnId);
@@ -1091,11 +1055,12 @@ function EditableCell({
     console.log(rowId, columnId);
     const columnsOrder = [
       "select",
-      "title",
-      "code",
-      "callingCode",
+      "name",
+      "email",
       "status",
       "createdAt",
+      "deletedAt",
+      "draftedAt",
       "actions",
     ];
     const currentIndex = columnsOrder.indexOf(columnId);
@@ -1116,47 +1081,55 @@ function EditableCell({
     }
   };
 
-  // Function to get flag from country code
-  const getFlagImage = (countryCode: string) => {
-    if (!countryCode) return null;
-    const code = countryCode.toLowerCase();
-    return `https://flagcdn.com/16x12/${code}.png`;
-  };
+  // const getFlagImage = (code: string) => {
+  //   return `https://flagcdn.com/w20/${code.toLowerCase()}.png`;
+  // };
 
   if (isEditing) {
     return (
-      <Input
-        ref={inputRef}
-        type={info.column.id === "rating" ? "number" : "text"}
-        value={editValue}
-        onChange={(e) => setEditValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={() => {
-          handleEdit(info.row.id, info.column.id, editValue);
-          setSelectedCell({
-            rowIndex: info.row.index,
-            columnId: info.column.id,
-          });
-        }}
-        className="h-full w-full border-0 outline-0 focus:ring-0 focus:border-0 p-0 bg-white dark:bg-gray-800"
-        style={{
-          minHeight: "100%",
-          margin: "-1rem -1.5rem",
-          padding: "1rem 1.5rem",
-          borderRadius: 0,
-          width: "calc(100% + 3rem)",
-          marginLeft: "-1.5rem",
-        }}
-      />
+      <>
+        {/* {info.column.id === "title" && info.row.original.code && (
+          <img
+            src={getFlagImage(info.row.original.code) || ""}
+            alt={`${info.getValue()} flag`}
+            className="w-5 h-4 mr-2 object-contain"
+            loading="lazy"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
+        )} */}
+        <Input
+          ref={inputRef}
+          type={info.column.id === "email" ? "email" : "text"}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={() => {
+            handleEdit(info.row.id, info.column.id, editValue);
+            setSelectedCell({
+              rowIndex: info.row.index,
+              columnId: info.column.id,
+            });
+          }}
+          className="h-full w-full border-0 outline-0 focus:ring-0 focus:border-0 p-1 bg-white dark:bg-gray-800"
+        />
+      </>
     );
   }
 
   return (
-    <div className="cursor-pointer hover:bg-gray-100 p-1 rounded min-h-[32px] flex items-center dark:hover:bg-gray-800">
-      {/* Add flag before country name for title column */}
-      {info.column.id === "title" && info.row.original.code && (
+    <div className="cursor-pointer hover:bg-gray-100 p-1 rounded min-h-[32px] flex items-center dark:hover:bg-gray-800 truncate">
+      {info.column.id === "createdAt" ||
+      info.column.id === "deletedAt" ||
+      info.column.id === "draftedAt"
+        ? info.getValue()
+          ? new Date(info.getValue() as string).toLocaleDateString()
+          : "—"
+        : info.getValue()}
+      {/* {info.column.id === "Flag" && (
         <img
-          src={getFlagImage(info.row.original.code) || ""}
+          src={`${info.row.original.flag}.svg`}
           alt={`${info.getValue()} flag`}
           className="w-5 h-4 mr-2 object-contain"
           loading="lazy"
@@ -1164,10 +1137,97 @@ function EditableCell({
             (e.target as HTMLImageElement).style.display = "none";
           }}
         />
-      )}
-      {info.column.id === "createdAt"
-        ? new Date(info.getValue() as string).toLocaleDateString()
-        : info.getValue()}
+      )} */}
+    </div>
+  );
+}
+
+function StatusEditableCell({
+  info,
+  editingCell,
+  setEditingCell,
+  editValue,
+  setEditValue,
+  handleEdit,
+  setSelectedCell,
+}: {
+  info: any;
+  editingCell: { rowId: string; columnId: string } | null;
+  setEditingCell: React.Dispatch<
+    React.SetStateAction<{ rowId: string; columnId: string } | null>
+  >;
+  editValue: any;
+  setEditValue: React.Dispatch<React.SetStateAction<any>>;
+  handleEdit: (rowId: string, columnId: string, value: any) => void;
+  selectedCell: { rowIndex: number; columnId: string };
+  setSelectedCell: React.Dispatch<
+    React.SetStateAction<{ rowIndex: number; columnId: string }>
+  >;
+}) {
+  const isEditing =
+    editingCell?.rowId === info.row.id &&
+    editingCell?.columnId === info.column.id;
+
+  const statusOptions = [
+    { value: "active", label: "Active" },
+    { value: "inactive", label: "Inactive" },
+    { value: "pending", label: "Pending" },
+  ];
+
+  const getStatusBadge = (status: string) => {
+    const statusColors = {
+      active: "bg-green-100 text-green-800",
+      inactive: "bg-red-100 text-red-800",
+      pending: "bg-yellow-100 text-yellow-800",
+    };
+
+    return (
+      <span
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          statusColors[status as keyof typeof statusColors] ||
+          "bg-gray-100 text-gray-800"
+        }`}
+      >
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
+  };
+
+  if (isEditing) {
+    return (
+      <Select
+        value={editValue}
+        onValueChange={(value: string) => {
+          setEditValue(value);
+          handleEdit(info.row.id, info.column.id, value);
+        }}
+        onOpenChange={(open: boolean) => {
+          if (!open) {
+            setEditingCell(null);
+            setSelectedCell({
+              rowIndex: info.row.index,
+              columnId: info.column.id,
+            });
+          }
+        }}
+      >
+        <SelectTrigger className="w-full border-0 outline-0 focus:ring-0 focus:border-0 p-1 bg-transparent h-auto">
+          <SelectValue placeholder="Select status" />
+        </SelectTrigger>
+        <SelectContent>
+          {statusOptions.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  return (
+    <div className="cursor-pointer hover:bg-gray-100 p-1 rounded min-h-[32px] flex items-center dark:hover:bg-gray-800">
+      {getStatusBadge(info.getValue())}
     </div>
   );
 }
@@ -1177,8 +1237,8 @@ function PaginationControls({ table }: { table: any }) {
     (table.getState().pagination.pageIndex + 1).toString()
   );
 
-  const defaultSizes = [10, 25, 50, 100];
-  const moreSizes = [200, 300, 400];
+  const defaultSizes = [10, 25, 50, 75];
+  const moreSizes = ["All", 400, 300, 200, 100];
 
   const currentPage = table.getState().pagination.pageIndex + 1;
   const totalPages = table.getPageCount();
@@ -1258,31 +1318,37 @@ function PaginationControls({ table }: { table: any }) {
             <Button
               size="sm"
               variant="outline"
-              className="min-w-[40px] bg-white text-blue-500 border-blue-500 hover:bg-blue-50"
+              className="min-w-[20px] bg-white text-blue-500 border-blue-500 hover:bg-blue-50"
             >
               <MoreHorizontal className="w-4 h-4" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-2 space-y-1">
-            {moreSizes.map((pageSize) => (
-              <Button
-                key={pageSize}
-                variant={
-                  table.getState().pagination.pageSize === pageSize
-                    ? "default"
-                    : "outline"
-                }
-                size="sm"
-                onClick={() => table.setPageSize(Number(pageSize))}
-                className={`w-full justify-start ${
-                  table.getState().pagination.pageSize === pageSize
-                    ? "bg-blue-500 text-white hover:bg-blue-600"
-                    : "hover:bg-blue-50"
-                }`}
-              >
-                {pageSize}
-              </Button>
-            ))}
+          <PopoverContent className="w-32 p-1">
+            {" "}
+            {/* Reduced width and padding */}
+            <div className="flex flex-col space-y-1">
+              {" "}
+              {/* Changed to column layout */}
+              {moreSizes.map((pageSize) => (
+                <Button
+                  key={pageSize}
+                  variant={
+                    table.getState().pagination.pageSize === pageSize
+                      ? "default"
+                      : "ghost" // Changed to ghost for more compact look
+                  }
+                  size="sm"
+                  onClick={() => table.setPageSize(Number(pageSize))}
+                  className={`min-w-[40px] ${
+                    table.getState().pagination.pageSize === pageSize
+                      ? "bg-blue-500 text-white hover:bg-blue-600"
+                      : "bg-white text-blue-500 border-blue-500 hover:bg-blue-50"
+                  }`}
+                >
+                  {pageSize}
+                </Button>
+              ))}
+            </div>
           </PopoverContent>
         </Popover>
       </div>
@@ -1369,7 +1435,11 @@ function DropdownMenuCheckboxItem({
       onSelect={(e) => e.preventDefault()}
       {...props}
     >
-      <Checkbox checked={checked} onCheckedChange={onCheckedChange} />
+      <Checkbox
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+        className="data-[state=checked]:bg-blue-500 data-[state=checked]:text-blue-500"
+      />
       {children}
     </DropdownMenuItem>
   );

@@ -1,21 +1,40 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Edit, FileText, Printer, History, Download } from "lucide-react";
+import { Edit, History, Download, Trash2, Undo } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import YoutubeButton from "@/components/common/YoutubeButton";
 import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
+import { Modal } from "@mantine/core";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const MOCK_STATES = [
+  { code: "CA", name: "California" },
+  { code: "NY", name: "New York" },
+  { code: "TX", name: "Texas" },
+  { code: "FL", name: "Florida" },
+  { code: "IL", name: "Illinois" },
+];
 
 export default function StateDetailsPage() {
   const { t } = useTranslation();
-  const [keepChanges, setKeepChanges] = useState(false);
   const navigate = useNavigate();
 
+  const [keepChanges, setKeepChanges] = useState(false);
+  const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
+  const [selectedState, setSelectedState] = useState("CA");
+
   const stateData = {
-    name: "California",
+    name:
+      MOCK_STATES.find((s) => s.code === selectedState)?.name || "California",
     countryCode: "US",
     countryName: "United States",
-    countryFlag: "🇺🇸",
     description: "The most populous state in the United States",
     isDefault: true,
     isActive: true,
@@ -27,169 +46,196 @@ export default function StateDetailsPage() {
     deletedAt: null,
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "--/--/----";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-GB");
+  const formatDate = (date: string | null) => {
+    if (!date) return "--/--/----";
+    const d = new Date(date);
+    const day = d.getDate();
+    const month = d.toLocaleString("default", { month: "short" });
+    const year = d.getFullYear();
+    return `${day} ${month} ${year}`;
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleExportPDF = () => {
-    console.log("Exporting to PDF...");
-  };
+  const handlePrint = () => window.print();
+  const handleExportPDF = () => console.log("Exporting PDF...");
+  const handleDeleteRestore = () =>
+    console.log(stateData.isDeleted ? "Restoring..." : "Deleting...");
 
   return (
-    <div className="container mx-auto px-4 py-4 flex flex-col min-h-screen dark:bg-gray-900">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
-        <div className="flex items-center gap-2">
-          <YoutubeButton videoId="PcVAyB3nDD4" />
-          <h1 className="text-xl font-bold text-blue-400">
-            {t("button.viewingState")}
-          </h1>
-        </div>
-        <div className="flex gap-2 w-full sm:w-auto justify-end">
+    <div className="relative w-full">
+      {/* Container with full height minus external footer */}
+      <div className="flex flex-col h-[calc(100vh-160px)] overflow-hidden border rounded shadow bg-white dark:bg-gray-800">
+        {/* Header */}
+        <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 border-b px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <YoutubeButton videoId="PcVAyB3nDD4" />
+            <h1 className="text-xl font-bold text-blue-400">
+              {t("button.viewingState")}
+            </h1>
+          </div>
           <Button
             variant="outline"
-            size="sm"
-            className="gap-1 hover:bg-blue-600 hover:text-white cursor-pointer"
+            className="gap-2 bg-blue-400 hover:bg-blue-600 text-white rounded-full"
             onClick={() => navigate("/states/1/edit")}
           >
-            <Edit className="h-3 w-3" />
+            <Edit className="h-4 w-4" />
             {t("button.edit")}
           </Button>
         </div>
-      </div>
 
-      {/* Main content */}
-      <div className="flex-1 overflow-y-auto pb-4">
-        <div className="bg-white rounded-lg shadow-sm border p-4 mb-4 dark:bg-gray-800 dark:border-gray-700">
+        {/* Scrollable Form Section */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+          {/* Row 1 */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            {/* State Name */}
             <div className="md:col-span-6">
-              <h3 className="font-medium text-sm mb-1">{t("form.name")}</h3>
-              <input
-                type="text"
-                value={stateData.name}
-                readOnly
-                className="border rounded px-2 py-1 text-sm w-full dark:bg-gray-700"
-              />
+              <h3 className="font-medium mb-1">Name</h3>
+              <Select value={selectedState} onValueChange={setSelectedState}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select state" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MOCK_STATES.map((state) => (
+                    <SelectItem key={state.code} value={state.code}>
+                      {state.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-
-            {/* Country */}
             <div className="md:col-span-6">
-              <h3 className="font-medium text-sm mb-1">{t("form.country")}</h3>
-              <div className="flex items-center gap-1 border rounded px-2 py-1 text-sm">
-                <span>{stateData.countryFlag}</span>
-                <span>{stateData.countryName}</span>
+              <div className="flex justify-between items-center mb-1">
+                <h3 className="font-medium">Country</h3>
               </div>
+              <div>{stateData.countryName}</div>
+              {/* <input
+                type="text"
+                value={`${stateData.countryCode} - ${stateData.countryName}`}
+                readOnly
+                className="w-full px-3 py-1.5 dark:bg-gray-700 dark:border-gray-600"
+              /> */}
             </div>
+          </div>
 
-            {/* Description */}
+          {/* Row 2 */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
             <div className="md:col-span-12">
-              <h3 className="font-medium text-sm mb-1">
-                {t("form.description")}
-              </h3>
+              <h3 className="font-medium mb-1">Description</h3>
               <textarea
                 value={stateData.description}
                 readOnly
-                className="border rounded px-2 py-1 text-sm w-full h-16 dark:bg-gray-700"
+                className="w-full px-3 py-1.5 h-20 dark:bg-gray-700 dark:border-gray-600"
               />
             </div>
+          </div>
 
-            {/* Toggles */}
-            <div className="md:col-span-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 pt-2">
-              {[
-                { label: t("common.active"), value: stateData.isActive },
-                { label: t("common.draft"), value: stateData.isDraft },
-                { label: t("button.delete"), value: stateData.isDeleted },
-                { label: t("common.default"), value: stateData.isDefault },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center gap-2">
-                  <div>
-                    <h3 className="font-medium text-sm mb-1">{item.label}</h3>
-                    <Switch
-                      checked={item.value}
-                      disabled
-                      className="data-[state=checked]:bg-blue-400 h-4 w-7"
-                    />
-                  </div>
-                </div>
-              ))}
+          {/* Row 3 */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-3">
+              <h3 className="font-medium mb-1">Default</h3>
+              <Switch checked={stateData.isDefault} disabled />
+            </div>
+            <div className="md:col-span-3">
+              <h3 className="font-medium mb-1">Draft</h3>
+              <Switch checked={stateData.isDraft} disabled />
+            </div>
+            <div className="md:col-span-3">
+              <h3 className="font-medium mb-1">Active</h3>
+              <Switch checked={stateData.isActive} disabled />
+            </div>
+            <div className="md:col-span-3">
+              <h3 className="font-medium mb-1">
+                {stateData.isDeleted ? "Restore" : "Delete"}
+              </h3>
+              <Button variant="ghost" size="icon" onClick={handleDeleteRestore}>
+                {stateData.isDeleted ? (
+                  <Undo className="text-blue-500" />
+                ) : (
+                  <Trash2 className="text-red-500" />
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Row 4 */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-3">
+              <h3 className="font-medium mb-1">Created</h3>
+              <p>{formatDate(stateData.createdAt)}</p>
+            </div>
+            <div className="md:col-span-3">
+              <h3 className="font-medium mb-1">Drafted</h3>
+              <p>{formatDate(stateData.draftedAt)}</p>
+            </div>
+            <div className="md:col-span-3">
+              <h3 className="font-medium mb-1">Updated</h3>
+              <p>{formatDate(stateData.updatedAt)}</p>
+            </div>
+            <div className="md:col-span-3">
+              <h3 className="font-medium mb-1">Deleted</h3>
+              <p>{formatDate(stateData.deletedAt)}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Fixed Bottom Button Bar */}
+        <div className="sticky bottom-0 z-30 bg-white dark:bg-gray-800 border-t px-6 py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex gap-6 items-center">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={keepChanges}
+                  className="data-[state=checked]:bg-blue-400"
+                  onCheckedChange={setKeepChanges}
+                />
+                <span className="dark:text-gray-200">
+                  {t("button.keepChanges")}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  className="data-[state=checked]:bg-blue-400"
+                  onClick={handleExportPDF}
+                />
+                <span className="dark:text-gray-200">PDF</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  className="data-[state=checked]:bg-blue-400"
+                  onClick={handlePrint}
+                />
+                <span className="dark:text-gray-200">Print</span>
+              </div>
             </div>
 
-            {/* Dates */}
-            <div className="md:col-span-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 pt-2 text-sm">
-              {[
-                { label: "Created", value: stateData.createdAt },
-                { label: "Updated", value: stateData.updatedAt },
-                { label: "Drafted", value: stateData.draftedAt },
-                { label: "Deleted", value: stateData.deletedAt },
-              ].map((item) => (
-                <div key={item.label}>
-                  <h3 className="font-medium text-sm mb-1">{item.label}</h3>
-                  <p>{formatDate(item.value)}</p>
-                </div>
-              ))}
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                className="gap-2 text-white bg-blue-400 hover:bg-blue-600 rounded-full"
+              >
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Export</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2 text-white bg-blue-400 hover:bg-blue-600 rounded-full"
+              >
+                <History className="h-4 w-4" />
+                <span className="hidden sm:inline">History</span>
+              </Button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="sticky bottom-0 bg-white border-t py-2 px-4 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-        <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={keepChanges}
-              className="data-[state=checked]:bg-blue-400 h-4 w-7"
-              onCheckedChange={setKeepChanges}
-              aria-label={t("button.keepChanges")}
-            />
-            <span className="text-sm">{t("button.keepChanges")}</span>
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1 cursor-pointer text-white bg-blue-400 hover:bg-blue-600 hover:text-white h-8"
-              onClick={handleExportPDF}
-            >
-              <FileText className="h-3 w-3" />
-              <span className="hidden sm:inline text-xs">PDF</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1 cursor-pointer text-white bg-blue-400 hover:bg-blue-600 hover:text-white h-8"
-              onClick={handlePrint}
-            >
-              <Printer className="h-3 w-3" />
-              <span className="hidden sm:inline text-xs">Print</span>
-            </Button>
-          </div>
-          <div className="flex gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1 cursor-pointer text-white bg-blue-400 hover:bg-blue-600 hover:text-white h-8"
-            >
-              <Download className="h-3 w-3" />
-              <span className="hidden sm:inline text-xs">Export</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1 cursor-pointer text-white bg-blue-400 hover:bg-blue-600 hover:text-white h-8"
-            >
-              <History className="h-3 w-3" />
-              <span className="hidden sm:inline text-xs">History</span>
-            </Button>
-          </div>
-        </div>
-      </div>
+      {/* Modal */}
+      <Modal
+        opened={isOptionModalOpen}
+        onClose={() => setIsOptionModalOpen(false)}
+        title="Options"
+        size="xl"
+        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
+      >
+        <div className="pt-5 pb-14 px-5">Modal Content</div>
+      </Modal>
     </div>
   );
 }

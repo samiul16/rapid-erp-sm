@@ -9,7 +9,7 @@ const EditableInput = ({
   onChange,
   onNext,
   onCancel,
-  placeholder,
+  // placeholder,
   maxLength,
   required = false,
   className = "",
@@ -85,17 +85,17 @@ const EditableInput = ({
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
-        placeholder={placeholder}
+        // placeholder={placeholder}
         maxLength={maxLength}
         required={required}
-        className={`pr-10 ${
+        className={`pr-10 focus:border-blue-400 focus-visible:ring-blue-400 ${
           !isValid && isTouched
-            ? "border-red-500 focus-visible:ring-red-500"
+            ? "border-red-400 focus-visible:ring-red-400"
             : ""
         } ${className}`}
       />
       {value && (
-        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-1">
+        <div className="absolute right-2 top-1/3 transform -translate-y-1/2 flex gap-1">
           <button
             type="button"
             onClick={handleCancel}
