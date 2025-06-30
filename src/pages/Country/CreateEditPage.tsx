@@ -188,7 +188,7 @@ export default function CountryFormPage({ isEdit = false }: Props) {
         <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 border-b px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <YoutubeButton videoId="PcVAyB3nDD4" />
-            <h1 className="text-xl font-bold text-blue-400">
+            <h1 className="text-xl font-bold">
               {isEdit ? t("form.editingCountry") : t("form.creatingCountry")}
             </h1>
           </div>
@@ -285,23 +285,6 @@ export default function CountryFormPage({ isEdit = false }: Props) {
               </div>
 
               <div className="md:col-span-3 space-y-2">
-                <Label htmlFor="isDraft" className="block">
-                  {t("common.draft")}
-                </Label>
-                <div className="h-10 flex items-center">
-                  <Switch
-                    id="isDraft"
-                    name="isDraft"
-                    className="data-[state=checked]:bg-blue-400"
-                    checked={formData.isDraft}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, isDraft: checked })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="md:col-span-3 space-y-2">
                 <Label htmlFor="isActive" className="block">
                   {t("common.active")}
                 </Label>
@@ -313,6 +296,23 @@ export default function CountryFormPage({ isEdit = false }: Props) {
                     checked={formData.isActive}
                     onCheckedChange={(checked) =>
                       setFormData({ ...formData, isActive: checked })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="md:col-span-3 space-y-2">
+                <Label htmlFor="isDraft" className="block">
+                  {t("common.draft")}
+                </Label>
+                <div className="h-10 flex items-center">
+                  <Switch
+                    id="isDraft"
+                    name="isDraft"
+                    className="data-[state=checked]:bg-blue-400"
+                    checked={formData.isDraft}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, isDraft: checked })
                     }
                   />
                 </div>
@@ -431,9 +431,7 @@ export default function CountryFormPage({ isEdit = false }: Props) {
                   className="data-[state=checked]:bg-blue-400"
                   onCheckedChange={setKeepCreating}
                 />
-                <span className="dark:text-gray-200">
-                  {t("button.keepCreating")}
-                </span>
+                <span className="dark:text-gray-200">{t("button.keep")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Switch className="data-[state=checked]:bg-blue-400" />

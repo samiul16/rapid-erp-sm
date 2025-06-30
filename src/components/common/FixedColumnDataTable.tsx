@@ -71,6 +71,7 @@ type User = {
     isFixed?: boolean;
     fixedPosition?: "left" | "right";
   };
+  actionMessage: string;
 };
 
 export default function CommonDataTable({
@@ -174,7 +175,7 @@ export default function CommonDataTable({
                     table.toggleAllPageRowsSelected(!!value)
                   }
                   aria-label="Select all"
-                  className="w-4 h-4 cursor-pointer"
+                  className="w-4 h-4 cursor-pointer data-[state=checked]:bg-blue-500 data-[state=checked]:text-blue-500"
                 />
               )}
             </div>
@@ -188,7 +189,7 @@ export default function CommonDataTable({
                     ? "opacity-100"
                     : "opacity-100"
                 }
-                transition-opacity
+                transition-opacit
               `}
           >
             <Checkbox
@@ -203,7 +204,7 @@ export default function CommonDataTable({
         minSize: 60,
         maxSize: 60,
         meta: {
-          isFixed: true, // Mark select column as always fixed
+          isFixed: true,
           fixedPosition: "left",
         },
       },
@@ -280,16 +281,21 @@ export default function CommonDataTable({
     columns.push({
       id: "actions",
       header: "Actions",
-      cell: () => (
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => goToDetails("1")}
-            className="bg-blue-300 hover:bg-blue-600 text-white rounded-full cursor-pointer"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+      cell: (info) => (
+        <div className="flex items-center justify-between">
+          <div className="text-gray-600 pr-5">
+            {info.row.original.actionMessage}
+          </div>
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => goToDetails("1")}
+              className="bg-blue-300 hover:bg-blue-600 text-white rounded-full cursor-pointer"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       ),
       size: 100,
@@ -486,7 +492,7 @@ export default function CommonDataTable({
   return (
     <div className="h-full flex flex-col px-4 py-3">
       {/* Header Controls - Fixed height */}
-      <div className="flex-shrink-0 pb-4">
+      <div className="flex-shrink-0 pb-4 h-[7vh]">
         <div className="grid grid-cols-12 gap-4 items-center">
           {/* Left column - View toggle, Import, and Bulk actions */}
           <div className="col-span-4 flex items-center gap-2">
@@ -698,7 +704,7 @@ export default function CommonDataTable({
                               : "hover:bg-gray-100 dark:hover:bg-gray-800"
                           } ${
                             isFixed
-                              ? `sticky z-10 bg-white dark:bg-gray-900 shadow-md border-r-gray-300 ${
+                              ? `sticky z-10 bg-white dark:bg-gray-900 shadow-md border-b border-gray-200 ${
                                   row.getIsSelected()
                                     ? "bg-gray-100 dark:bg-gray-800"
                                     : ""
@@ -1429,7 +1435,11 @@ function DropdownMenuCheckboxItem({
       onSelect={(e) => e.preventDefault()}
       {...props}
     >
-      <Checkbox checked={checked} onCheckedChange={onCheckedChange} />
+      <Checkbox
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+        className="data-[state=checked]:bg-blue-500 data-[state=checked]:text-blue-500"
+      />
       {children}
     </DropdownMenuItem>
   );

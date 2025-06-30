@@ -1,0 +1,609 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { ArrowDown, ArrowUp, X, Filter } from "lucide-react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  type ColumnDef,
+  type ColumnFiltersState,
+  flexRender,
+  getSortedRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+} from "@tanstack/react-table";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+// import { useTranslation } from "react-i18next";
+
+type HistoryEntry = {
+  id: string;
+  date: string;
+  user: string;
+  status: "Active" | "InActive" | "Delete" | "Draft";
+  export: "Single" | "Bulk";
+  pdf: boolean;
+  csv: boolean;
+  xls: boolean;
+  doc: boolean;
+  print: boolean;
+};
+
+export default function HistoryDataTable({
+  columnData,
+}: {
+  columnData: HistoryEntry[];
+}) {
+  const [data] = useState(columnData);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+
+  // Infinite scroll states
+  const [displayedRows, setDisplayedRows] = useState(15); // Initial rows to show
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  //   const { t } = useTranslation();
+
+  const ITEMS_PER_LOAD = 10; // Items to load per scroll
+
+  const columns = useMemo(() => {
+    const columns: ColumnDef<HistoryEntry>[] = [
+      {
+        accessorKey: "date",
+        header: ({ column }) => (
+          <ColumnFilterHeader column={column} title="Date" options={[]} />
+        ),
+        cell: (info) => (
+          <div className="text-sm text-gray-900">
+            {info.getValue() as string}
+          </div>
+        ),
+        size: 140,
+        minSize: 120,
+      },
+      {
+        accessorKey: "user",
+        header: ({ column }) => (
+          <ColumnFilterHeader
+            column={column}
+            title="User"
+            options={[
+              "Karim",
+              "Rahim",
+              "Moni",
+              "Sarah",
+              "Ahmed",
+              "Lisa",
+              "David",
+              "Maria",
+              "John",
+              "Emma",
+            ]}
+          />
+        ),
+        cell: (info) => (
+          <div className="text-sm text-gray-900 font-medium">
+            {info.getValue() as string}
+          </div>
+        ),
+        size: 120,
+        minSize: 100,
+      },
+      {
+        accessorKey: "status",
+        header: ({ column }) => (
+          <ColumnFilterHeader
+            column={column}
+            title="Status"
+            options={["Active", "InActive", "Delete", "Draft"]}
+          />
+        ),
+        cell: (info) => {
+          const status = info.getValue() as string;
+          const statusColors = {
+            Active: "text-green-600 bg-green-50",
+            InActive: "text-red-600 bg-red-50",
+            Delete: "text-red-600 bg-red-50",
+            Draft: "text-yellow-600 bg-yellow-50",
+          };
+
+          return (
+            <span
+              className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                statusColors[status as keyof typeof statusColors]
+              }`}
+            >
+              {status}
+            </span>
+          );
+        },
+        size: 100,
+        minSize: 80,
+      },
+      {
+        accessorKey: "export",
+        header: ({ column }) => (
+          <ColumnFilterHeader
+            column={column}
+            title="Export"
+            options={["Single", "Bulk"]}
+          />
+        ),
+        cell: (info: any) => (
+          <div className="text-sm text-gray-900">
+            {info.getValue() as string}
+          </div>
+        ),
+        size: 80,
+        minSize: 70,
+      },
+      {
+        accessorKey: "pdf",
+        header: "PDF",
+        cell: (info: any) => (
+          <div className="flex justify-center">
+            <div
+              className={`w-4 h-4 rounded-full border-2 ${
+                info.getValue()
+                  ? "bg-blue-500 border-blue-500"
+                  : "border-gray-300"
+              }`}
+            >
+              {info.getValue() && (
+                <div className="w-full h-full rounded-full bg-blue-500"></div>
+              )}
+            </div>
+          </div>
+        ),
+        size: 60,
+        minSize: 50,
+      },
+      {
+        accessorKey: "csv",
+        header: "CSV",
+        cell: (info: any) => (
+          <div className="flex justify-center">
+            <div
+              className={`w-4 h-4 rounded-full border-2 ${
+                info.getValue()
+                  ? "bg-blue-500 border-blue-500"
+                  : "border-gray-300"
+              }`}
+            >
+              {info.getValue() && (
+                <div className="w-full h-full rounded-full bg-blue-500"></div>
+              )}
+            </div>
+          </div>
+        ),
+        size: 60,
+        minSize: 50,
+      },
+      {
+        accessorKey: "xls",
+        header: "XLS",
+        cell: (info: any) => (
+          <div className="flex justify-center">
+            <div
+              className={`w-4 h-4 rounded-full border-2 ${
+                info.getValue()
+                  ? "bg-blue-500 border-blue-500"
+                  : "border-gray-300"
+              }`}
+            >
+              {info.getValue() && (
+                <div className="w-full h-full rounded-full bg-blue-500"></div>
+              )}
+            </div>
+          </div>
+        ),
+        size: 60,
+        minSize: 50,
+      },
+      {
+        accessorKey: "doc",
+        header: "DOC",
+        cell: (info: any) => (
+          <div className="flex justify-center">
+            <div
+              className={`w-4 h-4 rounded-full border-2 ${
+                info.getValue()
+                  ? "bg-blue-500 border-blue-500"
+                  : "border-gray-300"
+              }`}
+            >
+              {info.getValue() && (
+                <div className="w-full h-full rounded-full bg-blue-500"></div>
+              )}
+            </div>
+          </div>
+        ),
+        size: 60,
+        minSize: 50,
+      },
+      {
+        accessorKey: "print",
+        header: "Print",
+        cell: (info: any) => (
+          <div className="flex justify-center">
+            <div
+              className={`w-4 h-4 rounded-full border-2 ${
+                info.getValue()
+                  ? "bg-blue-500 border-blue-500"
+                  : "border-gray-300"
+              }`}
+            >
+              {info.getValue() && (
+                <div className="w-full h-full rounded-full bg-blue-500"></div>
+              )}
+            </div>
+          </div>
+        ),
+        size: 70,
+        minSize: 60,
+      },
+    ];
+
+    return columns;
+  }, []);
+
+  const table = useReactTable({
+    data,
+    columns,
+    state: {
+      columnFilters,
+      columnVisibility,
+    },
+    getRowId: (row) => row.id,
+    onColumnVisibilityChange: setColumnVisibility,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
+    columnResizeMode: "onChange",
+  });
+
+  // Get filtered data for infinite scroll
+  const filteredData = table.getFilteredRowModel().rows;
+  const visibleRows = filteredData.slice(0, displayedRows);
+
+  // Load more data function
+  const loadMoreData = useCallback(async () => {
+    if (isLoading || !hasMore) return;
+
+    setIsLoading(true);
+
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    const newDisplayedRows = displayedRows + ITEMS_PER_LOAD;
+    setDisplayedRows(newDisplayedRows);
+
+    // Check if we've loaded all available data
+    if (newDisplayedRows >= filteredData.length) {
+      setHasMore(false);
+    }
+
+    setIsLoading(false);
+  }, [displayedRows, filteredData.length, isLoading, hasMore]);
+
+  // Infinite scroll handler
+  const handleScroll = useCallback(() => {
+    const container = tableContainerRef.current;
+    if (!container) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const threshold = 100; // Load more when 100px from bottom
+
+    if (scrollHeight - scrollTop <= clientHeight + threshold) {
+      loadMoreData();
+    }
+  }, [loadMoreData]);
+
+  // Add scroll event listener
+  useEffect(() => {
+    const container = tableContainerRef.current;
+    if (!container) return;
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setDisplayedRows(15);
+    setHasMore(true);
+    setIsLoading(false);
+  }, [columnFilters]);
+
+  return (
+    <div className="h-[67vh] flex flex-col">
+      {/* Header with close button - Fixed */}
+      {/* <div className="flex-shrink-0 flex items-center justify-between p-4 border-b bg-blue-50">
+        <h2 className="text-lg font-semibold text-blue-600">Country History</h2>
+        <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
+          <X className="h-5 w-5" />
+        </Button>
+      </div> */}
+
+      {/* Table Container - Flexible height for scrolling */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Table Header - Fixed */}
+        <div className="flex-shrink-0 bg-gray-50 border-b border-gray-200">
+          <table className="w-full">
+            <thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      style={{
+                        width: `${header.getSize()}px`,
+                        minWidth: `${
+                          header.column.columnDef.minSize || header.getSize()
+                        }px`,
+                      }}
+                    >
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+          </table>
+        </div>
+
+        {/* Scrollable Table Body */}
+        <div
+          ref={tableContainerRef}
+          className="flex-1 overflow-auto scroll-smooth smooth-scroll"
+        >
+          <table className="w-full">
+            <tbody className="bg-white divide-y divide-gray-200">
+              {visibleRows.map((row) => (
+                <tr key={row.id} className="hover:bg-gray-50">
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className="px-3 py-2 whitespace-nowrap text-sm"
+                      style={{
+                        width: `${cell.column.getSize()}px`,
+                        minWidth: `${
+                          cell.column.columnDef.minSize || cell.column.getSize()
+                        }px`,
+                      }}
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Loading indicator */}
+          {isLoading && (
+            <div className="flex justify-center items-center py-8">
+              <div className="flex items-center gap-2 text-blue-600">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <span className="text-sm">Loading more entries...</span>
+              </div>
+            </div>
+          )}
+
+          {/* End of data indicator */}
+          {!hasMore && filteredData.length > 15 && (
+            <div className="flex justify-center items-center py-8">
+              <span className="text-sm text-gray-500">
+                All {filteredData.length} entries loaded
+              </span>
+            </div>
+          )}
+
+          {/* No data message */}
+          {filteredData.length === 0 && (
+            <div className="flex justify-center items-center py-8">
+              <span className="text-sm text-gray-500">
+                No entries found matching your filters
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Fixed Footer */}
+      <div className="flex-shrink-0 border-t bg-gray-50 px-4 py-2">
+        <div className="flex items-center justify-between text-sm text-gray-600">
+          <span>
+            Showing {Math.min(displayedRows, filteredData.length)} of{" "}
+            {filteredData.length} entries
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Column Filter Header Component (same as before)
+function ColumnFilterHeader({
+  column,
+  title,
+  options,
+}: {
+  column: any;
+  title: string;
+  options: string[];
+}) {
+  const [filterValue, setFilterValue] = useState("");
+  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const currentFilter = column.getFilterValue();
+  const sortDirection = column.getIsSorted();
+
+  useEffect(() => {
+    if (currentFilter && Array.isArray(currentFilter)) {
+      setSelectedOptions(currentFilter);
+    }
+  }, [currentFilter]);
+
+  const handleOptionToggle = (option: string) => {
+    const newSelectedOptions = selectedOptions.includes(option)
+      ? selectedOptions.filter((item) => item !== option)
+      : [...selectedOptions, option];
+
+    setSelectedOptions(newSelectedOptions);
+    column.setFilterValue(
+      newSelectedOptions.length > 0 ? newSelectedOptions : undefined
+    );
+  };
+
+  const clearFilter = () => {
+    setSelectedOptions([]);
+    column.setFilterValue(undefined);
+  };
+
+  const toggleSorting = () => {
+    if (sortDirection === "asc") {
+      column.toggleSorting(true);
+    } else {
+      column.toggleSorting(false);
+    }
+  };
+
+  const filteredOptions = options.filter((option) =>
+    option.toString().toLowerCase().includes(filterValue.toLowerCase())
+  );
+
+  return (
+    <div className="flex items-center gap-1 group">
+      <span className="truncate">{title}</span>
+
+      {/* Sort button */}
+      <button
+        onClick={toggleSorting}
+        className={`p-1 rounded transition-opacity flex-shrink-0 ${
+          sortDirection
+            ? "opacity-100 bg-blue-100 text-blue-600"
+            : "opacity-0 group-hover:opacity-100 text-gray-500 hover:bg-gray-100"
+        }`}
+      >
+        {sortDirection === "asc" ? (
+          <ArrowUp className="h-3 w-3" />
+        ) : sortDirection === "desc" ? (
+          <ArrowDown className="h-3 w-3" />
+        ) : (
+          <ArrowUp className="h-3 w-3" />
+        )}
+      </button>
+
+      {/* Filter button - only show if there are options */}
+      {options.length > 0 && (
+        <div
+          className={`flex-shrink-0 ${
+            isFilterOpen || selectedOptions.length > 0
+              ? "opacity-100"
+              : "opacity-0 group-hover:opacity-100"
+          } transition-opacity`}
+        >
+          <DropdownMenu onOpenChange={setIsFilterOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-5 w-5 p-0 ${
+                  selectedOptions.length > 0 ? "text-blue-600" : "text-gray-500"
+                }`}
+              >
+                <Filter className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              <div className="p-2">
+                <Input
+                  placeholder={`Search ${title}`}
+                  value={filterValue}
+                  onChange={(e) => setFilterValue(e.target.value)}
+                  className="h-7 text-sm"
+                />
+              </div>
+
+              <DropdownMenuSeparator />
+
+              {/* Options List */}
+              <div className="max-h-48 overflow-y-auto scroll-smooth smooth-scroll">
+                {filteredOptions.map((option) => (
+                  <DropdownMenuCheckboxItem
+                    key={option}
+                    checked={selectedOptions.includes(option)}
+                    onCheckedChange={() => handleOptionToggle(option)}
+                  >
+                    {option}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </div>
+
+              {/* Clear Filter */}
+              {selectedOptions.length > 0 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={clearFilter}>
+                    <X className="mr-2 h-3 w-3" />
+                    Clear filter
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
+
+      {/* Filter count indicator */}
+      {selectedOptions.length > 0 && (
+        <span className="ml-1 text-xs text-blue-500 flex-shrink-0">
+          {selectedOptions.length}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function DropdownMenuCheckboxItem({
+  children,
+  checked,
+  onCheckedChange,
+  ...props
+}: {
+  children: React.ReactNode;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <DropdownMenuItem
+      className="flex items-center gap-2"
+      onSelect={(e) => e.preventDefault()}
+      {...props}
+    >
+      <Checkbox checked={checked} onCheckedChange={onCheckedChange} />
+      {children}
+    </DropdownMenuItem>
+  );
+}

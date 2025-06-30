@@ -45,6 +45,13 @@ const colorMap: Record<
     border: "border-blue-200",
     bg: "bg-blue-50",
   },
+  yellow: {
+    text: "text-yellow-600",
+    bar: "text-yellow-500",
+    percentageText: "text-yellow-500",
+    border: "border-yellow-200",
+    bg: "bg-yellow-50",
+  },
   purple: {
     text: "text-purple-600",
     bar: "text-purple-500",
@@ -96,9 +103,9 @@ export default function SummaryCards({ data }: SummaryCardsProps) {
     {
       key: "draft",
       title: "Draft",
-      icon: <FileEdit size={28} className="text-purple-500" />,
-      color: "purple",
-      borderColor: "purple-200",
+      icon: <FileEdit size={28} className="text-yellow-500" />,
+      color: "yellow",
+      borderColor: "yellow-200",
       showPercentage: true,
       total: 5,
     },
@@ -123,9 +130,9 @@ export default function SummaryCards({ data }: SummaryCardsProps) {
     {
       key: "updated",
       title: "Updated",
-      icon: <CheckCircle size={28} className="text-green-500" />,
-      color: "green",
-      borderColor: "green-200",
+      icon: <CheckCircle size={28} className="text-blue-500" />,
+      color: "blue",
+      borderColor: "blue-200",
       showPercentage: true,
       total: 30,
     },
@@ -141,7 +148,7 @@ export default function SummaryCards({ data }: SummaryCardsProps) {
   ];
 
   return (
-    <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6 xl:grid-cols-6">
+    <div className="flex flex-wrap justify-between gap-y-6">
       {cardConfigs.map((config) => {
         const percentage = calculatePercentage(config.total);
         const colors = colorMap[config.color];
@@ -150,16 +157,17 @@ export default function SummaryCards({ data }: SummaryCardsProps) {
           <div
             key={config.key}
             className={`
-              relative p-4 rounded-2xl border cursor-pointer transition-all duration-300 
-              hover:shadow-md hover:scale-102 group h-[140px] w-full flex flex-col
+              relative p-3 rounded-2xl border cursor-pointer transition-all duration-300 
+              hover:shadow-md hover:scale-102 group h-[160px] flex flex-col
+              flex-1 min-w-[140px] max-w-[180px] mx-2
               ${colors.border} ${colors.bg}
             `}
           >
             {/* Top Section: Title and Icon */}
-            <div className="flex justify-between items-start mb-4">
+            <div className="flex justify-between items-start mb-6">
               {/* Title - Top Left */}
               <h3
-                className={`text-2xl font-medium ${colors.text} leading-tight`}
+                className={`text-lg font-medium ${colors.text} leading-tight`}
               >
                 {config.title}
               </h3>
@@ -182,12 +190,12 @@ export default function SummaryCards({ data }: SummaryCardsProps) {
               {config.showPercentage && percentage !== undefined && (
                 <div className="relative flex items-center justify-center">
                   {/* Circular Progress with Border */}
-                  <svg width="40" height="40" className="transform -rotate-90">
+                  <svg width="36" height="36" className="transform -rotate-90">
                     {/* Outer border circle */}
                     <circle
-                      cx="20"
-                      cy="20"
-                      r="18"
+                      cx="18"
+                      cy="18"
+                      r="16"
                       stroke="currentColor"
                       strokeWidth="1"
                       fill="none"
@@ -195,25 +203,25 @@ export default function SummaryCards({ data }: SummaryCardsProps) {
                     />
                     {/* Background circle */}
                     <circle
-                      cx="20"
-                      cy="20"
-                      r="15"
+                      cx="18"
+                      cy="18"
+                      r="13"
                       stroke="currentColor"
-                      strokeWidth="3"
+                      strokeWidth="2.5"
                       fill="none"
                       className="text-white opacity-50"
                     />
                     {/* Progress circle */}
                     <circle
-                      cx="20"
-                      cy="20"
-                      r="15"
+                      cx="18"
+                      cy="18"
+                      r="13"
                       stroke="currentColor"
-                      strokeWidth="3"
+                      strokeWidth="2.5"
                       fill="none"
-                      strokeDasharray={`${2 * Math.PI * 15}`}
+                      strokeDasharray={`${2 * Math.PI * 13}`}
                       strokeDashoffset={`${
-                        2 * Math.PI * 15 * (1 - percentage / 100)
+                        2 * Math.PI * 13 * (1 - percentage / 100)
                       }`}
                       className={colors.bar}
                       strokeLinecap="round"

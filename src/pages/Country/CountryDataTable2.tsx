@@ -13,6 +13,7 @@ const mockCountries = [
     createdAt: "2023-01-15",
     updatedAt: "2023-11-20",
     draftedAt: "2023-01-10",
+    actionMessage: "2h",
   },
   {
     id: "2",
@@ -25,6 +26,7 @@ const mockCountries = [
     createdAt: "2023-01-18",
     updatedAt: "2023-10-15",
     draftedAt: "2023-01-12",
+    actionMessage: "2h ",
   },
   {
     id: "3",
@@ -37,6 +39,7 @@ const mockCountries = [
     createdAt: "2023-02-01",
     updatedAt: "2023-11-10",
     draftedAt: "2023-01-25",
+    actionMessage: "20m",
   },
   {
     id: "4",
@@ -49,6 +52,7 @@ const mockCountries = [
     createdAt: "2023-02-10",
     updatedAt: "2023-11-05",
     draftedAt: "2023-02-05",
+    actionMessage: "15 Apr",
   },
   {
     id: "5",
@@ -60,6 +64,7 @@ const mockCountries = [
     createdAt: "2023-02-15",
     updatedAt: "2023-10-28",
     draftedAt: "2023-02-08",
+    actionMessage: "15 Apr 2023",
   },
   {
     id: "6",
@@ -71,10 +76,10 @@ const mockCountries = [
     createdAt: "2023-03-01",
     updatedAt: "2023-11-15",
     draftedAt: "2023-02-20",
+    actionMessage: "15 Apr 2024",
   },
   {
     id: "7",
-
     title: "Australia",
     code: "AU",
     callingCode: "+61",
@@ -83,6 +88,7 @@ const mockCountries = [
     createdAt: "2023-03-10",
     updatedAt: "2023-11-08",
     draftedAt: "2023-03-05",
+    actionMessage: "15 Apr 2024",
   },
   {
     id: "8",
@@ -94,6 +100,7 @@ const mockCountries = [
     createdAt: "2023-03-20",
     updatedAt: "2023-10-22",
     draftedAt: "2023-03-15",
+    actionMessage: "15 Apr 2024",
   },
   {
     id: "9",
@@ -105,6 +112,7 @@ const mockCountries = [
     createdAt: "2023-04-01",
     updatedAt: "2023-11-25",
     draftedAt: "2023-03-25",
+    actionMessage: "15 Apr 2024",
   },
   {
     id: "10",
@@ -116,6 +124,7 @@ const mockCountries = [
     createdAt: "2023-04-10",
     updatedAt: "2023-11-18",
     draftedAt: "2023-04-05",
+    actionMessage: "2h ",
   },
   {
     id: "11",
@@ -127,6 +136,7 @@ const mockCountries = [
     createdAt: "2023-04-15",
     updatedAt: "2023-09-10",
     draftedAt: "2023-04-10",
+    actionMessage: "2h ",
   },
   {
     id: "12",
@@ -138,6 +148,7 @@ const mockCountries = [
     createdAt: "2023-05-01",
     updatedAt: "2023-11-12",
     draftedAt: "2023-04-25",
+    actionMessage: "2h ",
   },
   {
     id: "13",
@@ -283,8 +294,8 @@ export default function CountriesDataTable2({
           .getValue("callingCode")
           .localeCompare(row2.getValue("callingCode"));
       },
-      size: 130,
-      minSize: 100,
+      size: 50,
+      minSize: 50,
     },
     {
       accessorKey: "currency",
@@ -304,23 +315,6 @@ export default function CountriesDataTable2({
       },
       size: 150,
       minSize: 100,
-    },
-    {
-      accessorKey: "currency",
-      title: "Currency",
-      options: [...new Set(mockCountries.map((item) => item.currency))],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.includes(cellValue);
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("currency")
-          .localeCompare(row2.getValue("currency"));
-      },
-      size: 120,
-      minSize: 80,
     },
     {
       accessorKey: "status",

@@ -145,6 +145,46 @@ const countries = [
     currency: "EUR",
     isDeleted: false,
   },
+  {
+    id: "12",
+    name: "Belgium",
+    code: "BE",
+    status: "active",
+    continent: "Europe",
+    population: "11 million",
+    currency: "EUR",
+    isDeleted: false,
+  },
+  {
+    id: "12",
+    name: "Belgium",
+    code: "BE",
+    status: "active",
+    continent: "Europe",
+    population: "11 million",
+    currency: "EUR",
+    isDeleted: false,
+  },
+  {
+    id: "12",
+    name: "Belgium",
+    code: "BE",
+    status: "active",
+    continent: "Europe",
+    population: "11 million",
+    currency: "EUR",
+    isDeleted: false,
+  },
+  {
+    id: "12",
+    name: "Belgium",
+    code: "BE",
+    status: "active",
+    continent: "Europe",
+    population: "11 million",
+    currency: "EUR",
+    isDeleted: false,
+  },
 ];
 
 export default function CountriesGrid({
@@ -312,7 +352,7 @@ export default function CountriesGrid({
           <div className="col-span-4 flex items-center gap-2">
             <Button
               variant="outline"
-              className="gap-2 cursor-pointer hover:bg-blue-500 text-black hover:text-white rounded-full min-w-[60px] sm:min-w-[80px]"
+              className="gap-2 cursor-pointer bg-blue-50 hover:bg-blue-500 text-black hover:text-white rounded-full min-w-[60px] sm:min-w-[80px]"
               onClick={() => handleViewModeChange("list")}
             >
               <List className="h-4 w-4" />
@@ -320,7 +360,7 @@ export default function CountriesGrid({
             </Button>
             <Button
               variant="outline"
-              className="gap-2 cursor-pointer hover:bg-blue-500 text-black hover:text-white rounded-full"
+              className="gap-2 cursor-pointer bg-blue-50 hover:bg-blue-500 text-black hover:text-white rounded-full"
               onClick={() => {
                 open();
                 setModalData({
@@ -340,7 +380,7 @@ export default function CountriesGrid({
               <div className="relative flex items-center rounded-full">
                 <Search className="absolute left-3 h-4 w-4 text-gray-400 z-10" />
                 <Input
-                  placeholder="Search countries..."
+                  placeholder="Search..."
                   className="pl-9 pr-9 w-full rounded-full relative z-10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -360,7 +400,7 @@ export default function CountriesGrid({
           <div className="col-span-4 flex items-center justify-end gap-2">
             <Button
               variant="outline"
-              className={`gap-2 cursor-pointer hover:bg-blue-500 text-black hover:text-white rounded-full ${
+              className={`gap-2 cursor-pointer bg-blue-50 hover:bg-blue-500 text-black hover:text-white rounded-full ${
                 isExportOpen ? "bg-blue-500 text-white" : ""
               }`}
               onClick={() => {
@@ -374,7 +414,7 @@ export default function CountriesGrid({
 
             <Button
               variant="outline"
-              className={`gap-2 cursor-pointer hover:bg-blue-500 text-black hover:text-white rounded-full ${
+              className={`gap-2 cursor-pointer bg-blue-50 hover:bg-blue-500 text-black hover:text-white rounded-full ${
                 isFilterOpen ? "bg-blue-500 text-white" : ""
               }`}
               onClick={() => {
@@ -405,7 +445,7 @@ export default function CountriesGrid({
                 key={country.id}
                 className="transition-all hover:border-blue-500 hover:shadow-md relative group dark:bg-gray-800 h-full py-2"
               >
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2">
                   <div className="flex items-center space-x-3">
                     <img
                       src={`https://flagcdn.com/${country.code.toLowerCase()}.svg`}
@@ -418,7 +458,7 @@ export default function CountriesGrid({
                       }}
                     />
                     <CardTitle
-                      className="text-sm font-semibold cursor-pointer hover:text-blue-600 transition-colors"
+                      className="text-lg font-semibold cursor-pointer hover:text-blue-600 transition-colors"
                       onClick={() => navigate(`/countries/1`)}
                     >
                       {country.name}
@@ -426,13 +466,11 @@ export default function CountriesGrid({
                   </div>
 
                   {/* Status and Actions with Tooltips */}
-                  <div className="flex gap-3 items-center">
+                  <div className="flex gap-2 items-center">
                     {/* Status Toggle with Tooltip */}
                     <Tooltip
                       label={
-                        country.status === "active"
-                          ? "Active - Click to deactivate"
-                          : "Inactive - Click to activate"
+                        country.status === "active" ? "Active" : "Inactive"
                       }
                       position="top"
                       withArrow
@@ -455,11 +493,7 @@ export default function CountriesGrid({
 
                     {/* Delete/Restore Toggle with Tooltip */}
                     <Tooltip
-                      label={
-                        country.isDeleted
-                          ? "Restore this country"
-                          : "Delete this country"
-                      }
+                      label={country.isDeleted ? "Delete" : "Restore"}
                       position="top"
                       withArrow
                     >
@@ -484,9 +518,9 @@ export default function CountriesGrid({
                 </CardHeader>
 
                 <CardContent className="pt-0">
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* Code */}
-                    <div className="space-y-1">
+                  <div className="flex justify-between items-start min-w-0">
+                    {/* Code - More Left Side */}
+                    <div className="space-y-1 flex-shrink-0 min-w-[80px] -ml-2">
                       <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                         Code:
                       </span>
@@ -495,12 +529,12 @@ export default function CountriesGrid({
                       </div>
                     </div>
 
-                    {/* Currency */}
-                    <div className="space-y-1 pl-8">
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    {/* Currency - Right Side with Aligned Value */}
+                    <div className="space-y-1 flex-shrink-0 min-w-[100px]">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400 text-right block">
                         Currency:
                       </span>
-                      <div className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      <div className="text-base font-semibold text-gray-900 dark:text-gray-100 text-right">
                         {country.currency}
                       </div>
                     </div>
@@ -569,6 +603,7 @@ export default function CountriesGrid({
         }}
         style={{ zIndex: 9999 }}
         className="z-[9999]"
+        centered
       >
         <div className="pt-5 pb-14 px-5">{modalData.message}</div>
       </Modal>

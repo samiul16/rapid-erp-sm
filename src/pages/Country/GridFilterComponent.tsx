@@ -132,6 +132,7 @@ export default function SimpleFilterComponent({
                     onCheckedChange={(checked) =>
                       handleParentCheck(key, checked)
                     }
+                    className="data-[state=checked]:bg-blue-500 data-[state=checked]:text-blue-500"
                   />
                   {key}
                 </div>
@@ -151,6 +152,7 @@ export default function SimpleFilterComponent({
                           onCheckedChange={(checked) =>
                             handleChildCheck(key, val, checked)
                           }
+                          className="data-[state=checked]:bg-blue-500 data-[state=checked]:text-blue-500"
                         />
                         <span className="text-sm">{val}</span>
                       </div>

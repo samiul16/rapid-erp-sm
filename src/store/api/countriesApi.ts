@@ -1,4 +1,4 @@
-import { apiSlice } from "./apiSLice";
+import { apiSlice } from "./apiSlice";
 
 // Define types for your data
 export interface Country {
@@ -44,7 +44,7 @@ export const countriesApi = apiSlice.injectEndpoints({
     // Get single country
     getCountry: builder.query<Country, string>({
       query: (id) => `countries/${id}`,
-      providesTags: (result, error, id) => [{ type: "Country", id }],
+      providesTags: (_result, _error, id) => [{ type: "Country", id }],
     }),
 
     // Create country
@@ -64,7 +64,7 @@ export const countriesApi = apiSlice.injectEndpoints({
         method: "PATCH",
         body: patch,
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: "Country", id }],
+      invalidatesTags: (_result, _error, { id }) => [{ type: "Country", id }],
     }),
 
     // Delete country
@@ -73,7 +73,7 @@ export const countriesApi = apiSlice.injectEndpoints({
         url: `countries/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: (result, error, id) => [{ type: "Country", id }],
+      invalidatesTags: (_result, _error, id) => [{ type: "Country", id }],
     }),
   }),
 });

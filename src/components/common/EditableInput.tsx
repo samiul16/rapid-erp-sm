@@ -9,7 +9,7 @@ const EditableInput = ({
   onChange,
   onNext,
   onCancel,
-  placeholder,
+  // placeholder,
   maxLength,
   required = false,
   className = "",
@@ -85,7 +85,7 @@ const EditableInput = ({
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
-        placeholder={placeholder}
+        // placeholder={placeholder}
         maxLength={maxLength}
         required={required}
         className={`pr-10 focus:border-blue-400 focus-visible:ring-blue-400 ${

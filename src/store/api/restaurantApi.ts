@@ -1,4 +1,4 @@
-import { apiSlice } from "./apiSLice";
+import { apiSlice } from "./apiSlice";
 import type {
   RestaurantApiResponse,
   RestaurantQueryParams,

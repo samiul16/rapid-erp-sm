@@ -36,7 +36,7 @@ export default function FilterComponent({
   };
 
   return (
-    <div className="w-72 h-[302px] flex flex-col border rounded-lg overflow-hidden">
+    <div className="w-72 h-[55vh] flex flex-col border rounded-lg overflow-hidden">
       {/* Header */}
       <div className="bg-white dark:bg-gray-900 border-b px-3 py-2">
         <div className="flex items-center gap-2">
@@ -106,6 +106,7 @@ export default function FilterComponent({
                         col.setFilterValue([]);
                       }
                     }}
+                    className="data-[state=checked]:bg-blue-500 data-[state=checked]:text-blue-500"
                   />
                   {col.id}
                 </div>
@@ -125,6 +126,7 @@ export default function FilterComponent({
                           else newValues.delete(value);
                           col.setFilterValue([...newValues]);
                         }}
+                        className="data-[state=checked]:bg-blue-500 data-[state=checked]:text-blue-500"
                       />
                       <span className="text-sm">
                         {String(value)} ({count})

@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Trash2, Undo } from "lucide-react";
+import { Edit, Trash2, Undo } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import YoutubeButton from "@/components/common/YoutubeButton";
 import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
 import { Autocomplete, Modal } from "@mantine/core";
+import HistoryDataTable from "@/components/common/HistoryDataTable";
+import { mockHistoryData } from "@/mockData/country-mockdata";
 
 const MOCK_COUNTRIES = [
   { code: "US", name: "United States", callingCode: "+1", flag: "🇺🇸" },
@@ -13,6 +15,20 @@ const MOCK_COUNTRIES = [
   { code: "AE", name: "United Arab Emirates", callingCode: "+971", flag: "🇦🇪" },
   { code: "IN", name: "India", callingCode: "+91", flag: "🇮🇳" },
 ];
+
+// Type definition for TypeScript
+export type HistoryEntry = {
+  id: string;
+  date: string;
+  user: string;
+  status: "Active" | "InActive" | "Delete" | "Draft";
+  export: "Single" | "Bulk";
+  pdf: boolean;
+  csv: boolean;
+  xls: boolean;
+  doc: boolean;
+  print: boolean;
+};
 
 const COUNTRY_DATA = MOCK_COUNTRIES.map((country) => country.code);
 
@@ -86,9 +102,7 @@ export default function CountryDetailsPage() {
         <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 border-b px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <YoutubeButton videoId="PcVAyB3nDD4" />
-            <h1 className="text-xl font-bold text-blue-400">
-              {t("button.viewingCountry")}
-            </h1>
+            <h1 className="text-xl font-bold">{t("button.viewingCountry")}</h1>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -172,10 +186,10 @@ export default function CountryDetailsPage() {
             <div className="md:col-span-1 flex  justify-end">
               <Button
                 variant="outline"
-                className="gap-2 bg-blue-400 hover:bg-blue-600 text-white rounded-full cursor-pointer"
+                className="gap-2 hover:bg-blue-500 hover:text-white rounded-full cursor-pointer"
                 onClick={() => navigate("/countries/1/edit")}
               >
-                {t("button.edit")}
+                <Edit className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -312,6 +326,7 @@ export default function CountryDetailsPage() {
               <Button
                 variant="outline"
                 className="gap-2 text-white bg-blue-400 hover:bg-blue-600 rounded-full cursor-pointer"
+                onClick={() => setIsOptionModalOpen(true)}
               >
                 <span className="hidden sm:inline">History</span>
               </Button>
@@ -330,11 +345,36 @@ export default function CountryDetailsPage() {
       <Modal
         opened={isOptionModalOpen}
         onClose={() => setIsOptionModalOpen(false)}
-        title="Options"
-        size="xl"
+        size="70%"
         overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
+        withCloseButton={false}
+        styles={{
+          body: {
+            height: "600px", // Fixed height in pixels
+            overflow: "hidden",
+            padding: 4,
+          },
+          content: {
+            height: "80vh", // Fixed height - 80% of viewport height
+            display: "flex",
+            flexDirection: "column",
+          },
+          header: {
+            flexShrink: 0,
+          },
+        }}
       >
-        <div className="pt-5 pb-14 px-5">Modal Content</div>
+        <Modal.Header>
+          <Modal.Title>
+            <span className="text-lg font-semibold text-blue-600">
+              Country History
+            </span>
+          </Modal.Title>
+          <Modal.CloseButton />
+        </Modal.Header>
+        <Modal.Body>
+          <HistoryDataTable columnData={mockHistoryData} />
+        </Modal.Body>
       </Modal>
     </div>
   );
