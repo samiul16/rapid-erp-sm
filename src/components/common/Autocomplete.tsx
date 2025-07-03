@@ -293,6 +293,14 @@ export default function AutocompleteDemo() {
             valueKey="code"
             searchKey="name"
             className="w-full"
+            styles={{
+              input: {
+                borderColor: "var(--primary)",
+                "&:focus": {
+                  borderColor: "var(--primary)",
+                },
+              },
+            }}
           />
           <div className="text-sm text-muted-foreground">
             Selected:{" "}
@@ -324,6 +332,14 @@ export default function AutocompleteDemo() {
             valueKey="id"
             searchKey="displayName"
             className="w-full"
+            styles={{
+              input: {
+                borderColor: "var(--primary)",
+                "&:focus": {
+                  borderColor: "var(--primary)",
+                },
+              },
+            }}
           />
           <div className="text-sm text-muted-foreground">
             Selected:{" "}

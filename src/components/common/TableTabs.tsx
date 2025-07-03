@@ -25,9 +25,22 @@ interface TabConfig {
   description: string;
 }
 
-const GmailTabs: React.FC = () => {
+interface GmailTabsProps {
+  dataTableFilter: any;
+  setDataTableFilter: any;
+}
+
+const GmailTabs: React.FC<GmailTabsProps> = ({
+  dataTableFilter,
+  setDataTableFilter,
+}) => {
   const [activeTab, setActiveTab] = useState<TabId>("total");
   const [hiddenTabs] = useState<TabId[]>([]);
+
+  const handleTabChange = (tabId: TabId, label: string) => {
+    setActiveTab(tabId);
+    setDataTableFilter({ ...dataTableFilter, status: label });
+  };
 
   // Sample data for demonstration
   const tabData: Record<TabId, TabData> = {
@@ -126,7 +139,7 @@ const GmailTabs: React.FC = () => {
               return (
                 <div
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id, tab.label)}
                   className={`
                     relative flex-1 flex items-center justify-center gap-2 px-4 py-3 cursor-pointer border-b-2 transition-all duration-200 whitespace-nowrap group
                     ${getTabColorClasses(data.color, isActive)}

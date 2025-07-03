@@ -137,7 +137,7 @@ export default function UserMastersGrid({
               <div className="relative flex items-center rounded-full">
                 <Search className="absolute left-3 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search users..."
+                  placeholder="Search..."
                   className="pl-9 pr-9 w-full rounded-full"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}

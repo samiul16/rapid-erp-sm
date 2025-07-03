@@ -257,7 +257,7 @@ export default function CitiesGrid({
               <div className="relative flex items-center rounded-full">
                 <Search className="absolute left-3 h-4 w-4 text-gray-400 z-10" />
                 <Input
-                  placeholder="Search cities..."
+                  placeholder="Search..."
                   className="pl-9 pr-9 w-full rounded-full relative z-10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}

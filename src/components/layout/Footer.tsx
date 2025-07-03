@@ -15,7 +15,12 @@ const Footer = () => {
         <div className="flex justify-start items-center cursor-pointer">
           <span className="text-sm text-gray-500 dark:text-gray-400">
             Powered by{" "}
-            <span className="text-blue-500 font-medium cursor-pointer">
+            <span
+              className="text-primary font-medium cursor-pointer"
+              onClick={() =>
+                window.open("https://rapidsmarterp.com/", "_blank")
+              }
+            >
               Rapid
             </span>
           </span>
@@ -45,7 +50,15 @@ const Footer = () => {
 
         {/* Right Section - Live Chat (right-aligned) */}
         <div className="flex justify-end items-center cursor-pointer">
-          <button className="flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors cursor-pointer">
+          <button
+            className="flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors cursor-pointer"
+            onClick={() =>
+              window.open(
+                "https://web.whatsapp.com/send?phone=971562015468&text=",
+                "_blank"
+              )
+            }
+          >
             Live Chat
           </button>
         </div>

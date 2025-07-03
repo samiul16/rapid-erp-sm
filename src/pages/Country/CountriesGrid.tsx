@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Trash2,
@@ -11,6 +11,7 @@ import {
   RefreshCw,
   CheckCircle2,
   Circle,
+  Pencil,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -20,8 +21,8 @@ import GridFilterComponent from "./GridFilterComponent";
 import GridExportComponent from "./GridExportComponent";
 import { Modal, Tooltip } from "@mantine/core"; // Import Tooltip from Mantine
 import { useDisclosure } from "@mantine/hooks";
-import ImportStepper from "@/components/common/ImportStepper";
-import toast from "react-hot-toast";
+import ImportStepperTemp from "@/components/common/IMportTemp";
+import { toastSuccess } from "@/lib/toast";
 
 // Mock data - replace with real data from your API
 const countries = [
@@ -47,16 +48,6 @@ const countries = [
   },
   {
     id: "3",
-    name: "United Kingdom",
-    code: "GB",
-    status: "active",
-    continent: "Europe",
-    population: "67 million",
-    currency: "GBP",
-    isDeleted: false,
-  },
-  {
-    id: "4",
     name: "Japan",
     code: "JP",
     status: "inactive",
@@ -66,7 +57,7 @@ const countries = [
     isDeleted: false,
   },
   {
-    id: "5",
+    id: "4",
     name: "Germany",
     code: "DE",
     status: "active",
@@ -76,7 +67,7 @@ const countries = [
     isDeleted: false,
   },
   {
-    id: "6",
+    id: "5",
     name: "France",
     code: "FR",
     status: "draft",
@@ -86,7 +77,7 @@ const countries = [
     isDeleted: false,
   },
   {
-    id: "7",
+    id: "6",
     name: "Italy",
     code: "IT",
     status: "active",
@@ -96,7 +87,7 @@ const countries = [
     isDeleted: false,
   },
   {
-    id: "8",
+    id: "7",
     name: "Spain",
     code: "ES",
     status: "active",
@@ -106,7 +97,7 @@ const countries = [
     isDeleted: false,
   },
   {
-    id: "9",
+    id: "8",
     name: "Portugal",
     code: "PT",
     status: "active",
@@ -116,7 +107,7 @@ const countries = [
     isDeleted: false,
   },
   {
-    id: "10",
+    id: "9",
     name: "Switzerland",
     code: "CH",
     status: "active",
@@ -126,7 +117,7 @@ const countries = [
     isDeleted: false,
   },
   {
-    id: "11",
+    id: "10",
     name: "Netherlands",
     code: "NL",
     status: "active",
@@ -136,7 +127,7 @@ const countries = [
     isDeleted: false,
   },
   {
-    id: "12",
+    id: "11",
     name: "Belgium",
     code: "BE",
     status: "active",
@@ -163,6 +154,16 @@ const countries = [
     continent: "Europe",
     population: "11 million",
     currency: "EUR",
+    isDeleted: false,
+  },
+  {
+    id: "3",
+    name: "United Kingdom",
+    code: "GB",
+    status: "active",
+    continent: "Europe",
+    population: "67 million",
+    currency: "GBP",
     isDeleted: false,
   },
   {
@@ -192,17 +193,17 @@ export default function CountriesGrid({
 }: {
   setViewMode: (viewMode: "grid" | "list") => void;
 }) {
+  console.log("Countries grid rendered");
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [, setIsShowResetButton] = useState(false);
   const [countriesData, setCountriesData] = useState(countries);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
   const [modalData, setModalData] = useState({
     title: "Import Country",
-    message: <ImportStepper />,
+    message: <ImportStepperTemp />,
   });
 
   // Infinite scroll states
@@ -219,10 +220,8 @@ export default function CountriesGrid({
 
     setIsLoading(true);
 
-    // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 800));
 
-    // Generate more mock countries for demonstration
     const continents = [
       "Europe",
       "Asia",
@@ -293,9 +292,6 @@ export default function CountriesGrid({
           : country
       )
     );
-    toast.success(
-      "Successfully deleted " + countries.find((c) => c.id === countryId)?.name
-    );
   };
 
   const handleRestoreClick = (countryId: string) => {
@@ -308,9 +304,6 @@ export default function CountriesGrid({
             }
           : country
       )
-    );
-    toast.success(
-      "Successfully restored " + countries.find((c) => c.id === countryId)?.name
     );
   };
 
@@ -328,10 +321,6 @@ export default function CountriesGrid({
             }
           : country
       )
-    );
-    toast.success(
-      "Successfully updated status to " +
-        countries.find((c) => c.id === countryId)?.status
     );
   };
 
@@ -352,7 +341,7 @@ export default function CountriesGrid({
           <div className="col-span-4 flex items-center gap-2">
             <Button
               variant="outline"
-              className="gap-2 cursor-pointer bg-blue-50 hover:bg-blue-500 text-black hover:text-white rounded-full min-w-[60px] sm:min-w-[80px]"
+              className="gap-  rounded-full min-w-[60px] sm:min-w-[80px]"
               onClick={() => handleViewModeChange("list")}
             >
               <List className="h-4 w-4" />
@@ -360,12 +349,12 @@ export default function CountriesGrid({
             </Button>
             <Button
               variant="outline"
-              className="gap-2 cursor-pointer bg-blue-50 hover:bg-blue-500 text-black hover:text-white rounded-full"
+              className="gap-2 cursor-pointer rounded-full"
               onClick={() => {
                 open();
                 setModalData({
                   title: "Import Country",
-                  message: <ImportStepper />,
+                  message: <ImportStepperTemp />,
                 });
               }}
             >
@@ -385,13 +374,21 @@ export default function CountriesGrid({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="absolute right-2 h-6 w-6 rounded-full cursor-pointer p-0 z-10"
+                <Tooltip
+                  arrowOffset={10}
+                  arrowSize={7}
+                  withArrow
+                  position="top"
+                  label="Search by voice"
                 >
-                  <Mic className="h-4 w-4 text-blue-400" />
-                </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute right-2 h-6 w-6 rounded-full cursor-pointer p-0 z-10"
+                  >
+                    <Mic className="h-4 w-4 text-blue-700" />
+                  </Button>
+                </Tooltip>
               </div>
             </div>
           </div>
@@ -400,8 +397,8 @@ export default function CountriesGrid({
           <div className="col-span-4 flex items-center justify-end gap-2">
             <Button
               variant="outline"
-              className={`gap-2 cursor-pointer bg-blue-50 hover:bg-blue-500 text-black hover:text-white rounded-full ${
-                isExportOpen ? "bg-blue-500 text-white" : ""
+              className={`gap-2 rounded-full ${
+                isExportOpen ? "bg-primary text-white" : ""
               }`}
               onClick={() => {
                 setIsExportOpen(!isExportOpen);
@@ -414,8 +411,8 @@ export default function CountriesGrid({
 
             <Button
               variant="outline"
-              className={`gap-2 cursor-pointer bg-blue-50 hover:bg-blue-500 text-black hover:text-white rounded-full ${
-                isFilterOpen ? "bg-blue-500 text-white" : ""
+              className={`gap-2 rounded-full ${
+                isFilterOpen ? "bg-primary text-white" : ""
               }`}
               onClick={() => {
                 setIsFilterOpen(!isFilterOpen);
@@ -443,103 +440,134 @@ export default function CountriesGrid({
             {filteredCountries.map((country) => (
               <Card
                 key={country.id}
-                className="transition-all hover:border-blue-500 hover:shadow-md relative group dark:bg-gray-800 h-full py-2"
+                className="transition-all hover:border-primary hover:shadow-md relative group dark:bg-gray-800 p-4"
               >
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2">
-                  <div className="flex items-center space-x-3">
+                {/* Top Row - Grid with 3 columns: Title | Icons | Flag */}
+                <div className="grid grid-cols-3 items-center gap-2 mb-4">
+                  {/* Left - Title */}
+                  <Tooltip label={country.name} position="top" withArrow>
+                    <CardTitle
+                      className="text-lg font-semibold cursor-pointer hover:text-primary transition-colors truncate"
+                      onClick={() => navigate(`/countries/1`)}
+                    >
+                      {country.name}
+                    </CardTitle>
+                  </Tooltip>
+
+                  {/* Middle - Action Icons */}
+                  <div className="flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    {/* Status Toggle */}
+                    <Tooltip
+                      label={
+                        country.status === "active"
+                          ? "CLick to Inactivate"
+                          : "CLick to Activate"
+                      }
+                      position="top"
+                      withArrow
+                    >
+                      <div
+                        className={`cursor-pointer p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+                          country.status === "active"
+                            ? "text-green-500"
+                            : "text-gray-400"
+                        }`}
+                        onClick={() => {
+                          toggleStatus(country.id);
+                          toastSuccess(
+                            country.status === "active"
+                              ? "Country activated successfully"
+                              : "Country inactivated successfully"
+                          );
+                        }}
+                      >
+                        {country.status === "active" ? (
+                          <CheckCircle2 className="h-4 w-4" />
+                        ) : (
+                          <Circle className="h-4 w-4" />
+                        )}
+                      </div>
+                    </Tooltip>
+
+                    {/* Delete/Restore */}
+                    <Tooltip
+                      label={country.isDeleted ? "Restore" : "Delete"}
+                      position="top"
+                      withArrow
+                    >
+                      <div
+                        className={`cursor-pointer p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+                          country.isDeleted ? "text-blue-500" : "text-red-500"
+                        }`}
+                        onClick={() => {
+                          if (country.isDeleted) {
+                            handleRestoreClick(country.id);
+                          } else {
+                            handleDeleteClick(country.id);
+                          }
+                          toastSuccess(
+                            country.isDeleted
+                              ? "Country restored successfully"
+                              : "Country deleted successfully"
+                          );
+                        }}
+                      >
+                        {country.isDeleted ? (
+                          <RefreshCw className="h-4 w-4" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </div>
+                    </Tooltip>
+
+                    {/* Edit */}
+                    <Tooltip label="Edit" position="top" withArrow>
+                      <div
+                        className="cursor-pointer p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-blue-500"
+                        onClick={() => navigate(`/countries/1/edit`)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </div>
+                    </Tooltip>
+                  </div>
+
+                  {/* Right - Flag */}
+                  <div className="flex justify-end">
                     <img
                       src={`https://flagcdn.com/${country.code.toLowerCase()}.svg`}
                       alt={`${country.name} flag`}
-                      className="h-8 w-12 object-cover border rounded-sm shadow-sm"
+                      className="h-12 w-12 object-cover border rounded-md shadow-sm"
                       onError={(e) => {
                         (
                           e.target as HTMLImageElement
                         ).src = `https://flagcdn.com/us.svg`;
                       }}
                     />
-                    <CardTitle
-                      className="text-lg font-semibold cursor-pointer hover:text-blue-600 transition-colors"
-                      onClick={() => navigate(`/countries/1`)}
-                    >
-                      {country.name}
-                    </CardTitle>
                   </div>
+                </div>
 
-                  {/* Status and Actions with Tooltips */}
-                  <div className="flex gap-2 items-center">
-                    {/* Status Toggle with Tooltip */}
-                    <Tooltip
-                      label={
-                        country.status === "active" ? "Active" : "Inactive"
-                      }
-                      position="top"
-                      withArrow
-                    >
-                      <div
-                        className={`cursor-pointer p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                          country.status === "active"
-                            ? "text-green-500"
-                            : "text-gray-400"
-                        }`}
-                        onClick={() => toggleStatus(country.id)}
-                      >
-                        {country.status === "active" ? (
-                          <CheckCircle2 className="h-5 w-5" />
-                        ) : (
-                          <Circle className="h-5 w-5" />
-                        )}
-                      </div>
-                    </Tooltip>
-
-                    {/* Delete/Restore Toggle with Tooltip */}
-                    <Tooltip
-                      label={country.isDeleted ? "Delete" : "Restore"}
-                      position="top"
-                      withArrow
-                    >
-                      <div
-                        className={`cursor-pointer p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                          country.isDeleted ? "text-blue-500" : "text-red-500"
-                        }`}
-                        onClick={() =>
-                          country.isDeleted
-                            ? handleRestoreClick(country.id)
-                            : handleDeleteClick(country.id)
-                        }
-                      >
-                        {country.isDeleted ? (
-                          <RefreshCw className="h-5 w-5" />
-                        ) : (
-                          <Trash2 className="h-5 w-5" />
-                        )}
-                      </div>
-                    </Tooltip>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="pt-0">
-                  <div className="flex justify-between items-start min-w-0">
-                    {/* Code - More Left Side */}
-                    <div className="space-y-1 flex-shrink-0 min-w-[80px] -ml-2">
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                        Code:
-                      </span>
-                      <div className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                        {country.code}
-                      </div>
+                {/* Bottom Row - Grid with 2 columns: Code | Currency */}
+                <div className="grid grid-cols-2 items-center gap-4 pt-2 dark:border-gray-700">
+                  {/* Code - Left aligned */}
+                  <div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Code
                     </div>
-
-                    {/* Currency - Right Side with Aligned Value */}
-                    <div className="space-y-1 flex-shrink-0 min-w-[100px]">
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400 text-right block">
-                        Currency:
-                      </span>
-                      <div className="text-base font-semibold text-gray-900 dark:text-gray-100 text-right">
-                        {country.currency}
-                      </div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      {country.code}
                     </div>
                   </div>
-                </CardContent>
+
+                  {/* Currency - Right aligned */}
+                  <div className="text-right">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Currency
+                    </div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      {country.currency}
+                    </div>
+                  </div>
+                </div>
               </Card>
             ))}
           </div>
@@ -571,7 +599,7 @@ export default function CountriesGrid({
               <GridFilterComponent
                 data={countries}
                 setFilteredData={setCountriesData}
-                setShowFilter={setIsShowResetButton}
+                setShowFilter={setIsFilterOpen}
               />
             </div>
           </div>
@@ -595,7 +623,11 @@ export default function CountriesGrid({
       <Modal
         opened={opened}
         onClose={close}
-        title="Import Country"
+        title={
+          <div className="">
+            <h3 className="text-lg font-semibold pl-4 ">Import Country</h3>
+          </div>
+        }
         size="xl"
         overlayProps={{
           backgroundOpacity: 0.55,

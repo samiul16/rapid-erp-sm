@@ -6,5 +6,6 @@ declare module "@tanstack/react-table" {
   interface ColumnMeta {
     isFixed?: boolean;
     fixedPosition?: "left" | "right";
+    exportLabel?: string;
   }
 }

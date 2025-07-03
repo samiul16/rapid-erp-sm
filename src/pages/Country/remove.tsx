@@ -594,7 +594,7 @@ export default function CountryDataTable({
               <div className="relative flex items-center rounded-full">
                 <Search className="absolute left-3 h-4 w-4 text-gray-400 text-blue-500" />
                 <Input
-                  placeholder="Search countries..."
+                  placeholder="Search..."
                   className="pl-9 pr-9 w-full rounded-full"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -683,7 +683,7 @@ export default function CountryDataTable({
                       <div className="relative flex-1">
                         <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                         <Input
-                          placeholder="Search columns..."
+                          placeholder="Search..."
                           className="pl-8 h-8 w-full"
                           value={columnSearch}
                           onChange={(e) => setColumnSearch(e.target.value)}

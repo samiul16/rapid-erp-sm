@@ -43,15 +43,15 @@ const Sidebar = () => {
       label: t("sidebar.menu.search"),
       path: "/search",
     },
+  ];
+
+  const scrollableMenus = [
     {
       key: "dashboard",
       icon: LayoutDashboard,
       label: t("sidebar.menu.dashboard"),
       path: "/dashboard",
     },
-  ];
-
-  const scrollableMenus = [
     {
       key: "users",
       icon: Users,
@@ -137,25 +137,30 @@ const Sidebar = () => {
       label: t("sidebar.menu.report"),
       path: "/reports",
     },
-  ];
-
-  const fixedBottomMenus = [
     {
       key: "settings",
       icon: Settings,
       label: t("sidebar.menu.settings"),
       path: "/settings",
     },
+  ];
+
+  const fixedBottomMenus = [
     {
       key: "theme",
       icon: theme === "dark" ? Sun : Moon,
+
       label:
         theme === "dark" ? t("navbar.theme.light") : t("navbar.theme.dark"),
       action: toggleTheme,
     },
   ];
 
-  const handleMenuClick = (key: string, path?: string, action?: () => void) => {
+  const handleMenuClick = (
+    key: string,
+    path?: string | null,
+    action?: () => void
+  ) => {
     setActiveMenu(key);
     if (action) {
       action();
@@ -232,7 +237,7 @@ const Sidebar = () => {
                 {activeMenu === key && (
                   <div
                     className={clsx(
-                      "absolute h-full w-1.5 bg-blue-500 rounded-full top-0",
+                      "absolute h-full w-1.5 bg-primary rounded-full top-0 text-primary",
                       isRTL ? "right-0" : "left-0"
                     )}
                   />
@@ -251,7 +256,7 @@ const Sidebar = () => {
                 className={clsx(
                   "relative group flex flex-col items-center transition-all w-full my-2 py-2",
                   {
-                    "text-blue-500 border-b": activeMenu === key,
+                    "text-primary border-b": activeMenu === key,
                     "text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800":
                       activeMenu !== key,
                   }
@@ -267,7 +272,7 @@ const Sidebar = () => {
                 {activeMenu === key && (
                   <div
                     className={clsx(
-                      "absolute h-full w-1.5 bg-blue-500 rounded-full top-0",
+                      "absolute h-full w-1.5 bg-primary rounded-full top-0 text-primary",
                       isRTL ? "right-0" : "left-0"
                     )}
                   />
@@ -280,37 +285,35 @@ const Sidebar = () => {
         {/* Bottom Fixed Menus */}
         {!isCollapsed && (
           <div className="space-y-8 w-full px-2 py-4">
-            {fixedBottomMenus.map(
-              ({ key, icon: Icon, label, path, action }) => (
-                <button
-                  key={key}
-                  className={clsx(
-                    "relative group flex flex-col items-center transition-all w-full py-1",
-                    {
-                      " border-b text-blue-500": activeMenu === key,
-                      "text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800":
-                        activeMenu !== key,
-                    }
-                  )}
-                  onClick={() => handleMenuClick(key, path, action)}
-                >
-                  <div className="flex flex-col items-center w-full">
-                    <Icon className="w-6 h-6" />
-                    <span className="text-xs mt-2 whitespace-nowrap">
-                      {label}
-                    </span>
-                  </div>
-                  {activeMenu === key && path && (
-                    <div
-                      className={clsx(
-                        "absolute h-full w-1.5 bg-blue-500 rounded-full top-0",
-                        isRTL ? "right-0" : "left-0"
-                      )}
-                    />
-                  )}
-                </button>
-              )
-            )}
+            {fixedBottomMenus.map(({ key, icon: Icon, label, action }) => (
+              <button
+                key={key}
+                className={clsx(
+                  "relative group flex flex-col items-center transition-all w-full py-1",
+                  {
+                    "border-b text-primary": activeMenu === key,
+                    "text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800":
+                      activeMenu !== key,
+                  }
+                )}
+                onClick={() => handleMenuClick(key, null, action)}
+              >
+                <div className="flex flex-col items-center w-full">
+                  <Icon className="w-6 h-6" />
+                  <span className="text-xs mt-2 whitespace-nowrap">
+                    {label}
+                  </span>
+                </div>
+                {activeMenu === key && (
+                  <div
+                    className={clsx(
+                      "absolute h-full w-1.5 bg-primary rounded-full top-0 text-primary",
+                      isRTL ? "right-0" : "left-0"
+                    )}
+                  />
+                )}
+              </button>
+            ))}
           </div>
         )}
       </div>
