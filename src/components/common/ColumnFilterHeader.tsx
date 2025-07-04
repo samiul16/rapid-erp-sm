@@ -103,7 +103,7 @@ export default function ColumnFilterHeader({
           <DropdownMenuContent align="start" className="w-56">
             <div className="p-2">
               <Input
-                placeholder={`Search ${title}`}
+                placeholder={`Search...`}
                 value={filterValue}
                 onChange={(e) => setFilterValue(e.target.value)}
                 className="h-8"

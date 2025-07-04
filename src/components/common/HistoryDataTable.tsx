@@ -1,28 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { ArrowDown, ArrowUp, X, Filter } from "lucide-react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import {
   useReactTable,
   getCoreRowModel,
   getFilteredRowModel,
   type ColumnDef,
   type ColumnFiltersState,
+  type SortingState,
   flexRender,
   getSortedRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
+  getPaginationRowModel,
 } from "@tanstack/react-table";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-// import { useTranslation } from "react-i18next";
 
 type HistoryEntry = {
   id: string;
@@ -45,23 +36,29 @@ export default function HistoryDataTable({
   const [data] = useState(columnData);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState({});
+  const [sorting, setSorting] = useState<SortingState>([]);
+
+  // Cell selection state
+  const [selectedCell, setSelectedCell] = useState({
+    rowIndex: -1,
+    columnId: "",
+  });
 
   // Infinite scroll states
-  const [displayedRows, setDisplayedRows] = useState(15); // Initial rows to show
+  const [displayedRows, setDisplayedRows] = useState(15);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  //   const { t } = useTranslation();
 
-  const ITEMS_PER_LOAD = 10; // Items to load per scroll
+  const ITEMS_PER_LOAD = 10;
 
   const columns = useMemo(() => {
     const columns: ColumnDef<HistoryEntry>[] = [
       {
         accessorKey: "date",
         header: ({ column }) => (
-          <ColumnFilterHeader column={column} title="Date" options={[]} />
+          <ColumnFilterHeader column={column} title="Date" />
         ),
         cell: (info) => (
           <div className="text-sm text-gray-900">
@@ -74,39 +71,23 @@ export default function HistoryDataTable({
       {
         accessorKey: "user",
         header: ({ column }) => (
-          <ColumnFilterHeader
-            column={column}
-            title="User"
-            options={[
-              "Karim",
-              "Rahim",
-              "Moni",
-              "Sarah",
-              "Ahmed",
-              "Lisa",
-              "David",
-              "Maria",
-              "John",
-              "Emma",
-            ]}
-          />
+          <ColumnFilterHeader column={column} title="User" />
         ),
         cell: (info) => (
           <div className="text-sm text-gray-900 font-medium">
             {info.getValue() as string}
           </div>
         ),
+        sortingFn: (row1: any, row2: any) => {
+          return row1.getValue("user").localeCompare(row2.getValue("user"));
+        },
         size: 120,
         minSize: 100,
       },
       {
         accessorKey: "status",
         header: ({ column }) => (
-          <ColumnFilterHeader
-            column={column}
-            title="Status"
-            options={["Active", "InActive", "Delete", "Draft"]}
-          />
+          <ColumnFilterHeader column={column} title="Status" />
         ),
         cell: (info) => {
           const status = info.getValue() as string;
@@ -133,11 +114,7 @@ export default function HistoryDataTable({
       {
         accessorKey: "export",
         header: ({ column }) => (
-          <ColumnFilterHeader
-            column={column}
-            title="Export"
-            options={["Single", "Bulk"]}
-          />
+          <ColumnFilterHeader column={column} title="Export" />
         ),
         cell: (info: any) => (
           <div className="text-sm text-gray-900">
@@ -263,41 +240,110 @@ export default function HistoryDataTable({
     state: {
       columnFilters,
       columnVisibility,
+      sorting,
     },
     getRowId: (row) => row.id,
     onColumnVisibilityChange: setColumnVisibility,
     onColumnFiltersChange: setColumnFilters,
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     columnResizeMode: "onChange",
   });
 
-  // Get filtered data for infinite scroll
-  const filteredData = table.getFilteredRowModel().rows;
-  const visibleRows = filteredData.slice(0, displayedRows);
+  // Get sorted and filtered data for infinite scroll
+  const sortedAndFilteredData = table.getSortedRowModel().rows;
+  const visibleRows = sortedAndFilteredData.slice(0, displayedRows);
+
+  // Cell selection functions
+  const handleCellClick = useCallback((rowIndex: number, columnId: string) => {
+    setSelectedCell({ rowIndex, columnId });
+  }, []);
+
+  const isCellSelected = (rowIndex: number, columnId: string) => {
+    return (
+      selectedCell.rowIndex === rowIndex && selectedCell.columnId === columnId
+    );
+  };
+
+  // Keyboard navigation
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (selectedCell.rowIndex === -1 || !selectedCell.columnId) return;
+
+      const rows = visibleRows;
+      const columns = table.getAllColumns().filter((col) => col.getIsVisible());
+      const columnIds = columns.map((col) => col.id);
+      const currentRowIndex = selectedCell.rowIndex;
+      const currentColumnIndex = columnIds.indexOf(selectedCell.columnId);
+
+      let newRowIndex = currentRowIndex;
+      let newColumnIndex = currentColumnIndex;
+
+      switch (e.key) {
+        case "ArrowUp":
+          e.preventDefault();
+          newRowIndex = Math.max(0, currentRowIndex - 1);
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          newRowIndex = Math.min(rows.length - 1, currentRowIndex + 1);
+          break;
+        case "ArrowLeft":
+          e.preventDefault();
+          newColumnIndex = Math.max(0, currentColumnIndex - 1);
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          newColumnIndex = Math.min(
+            columnIds.length - 1,
+            currentColumnIndex + 1
+          );
+          break;
+        default:
+          return;
+      }
+
+      setSelectedCell({
+        rowIndex: newRowIndex,
+        columnId: columnIds[newColumnIndex],
+      });
+    },
+    [selectedCell, visibleRows, table]
+  );
+
+  // Add keyboard event listener
+  useEffect(() => {
+    const tableContainer = tableContainerRef.current;
+    if (tableContainer) {
+      tableContainer.addEventListener("keydown", handleKeyDown);
+      tableContainer.setAttribute("tabindex", "0");
+      return () => {
+        tableContainer.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, [handleKeyDown]);
 
   // Load more data function
   const loadMoreData = useCallback(async () => {
     if (isLoading || !hasMore) return;
 
     setIsLoading(true);
-
-    // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     const newDisplayedRows = displayedRows + ITEMS_PER_LOAD;
     setDisplayedRows(newDisplayedRows);
 
-    // Check if we've loaded all available data
-    if (newDisplayedRows >= filteredData.length) {
+    if (newDisplayedRows >= sortedAndFilteredData.length) {
       setHasMore(false);
     }
 
     setIsLoading(false);
-  }, [displayedRows, filteredData.length, isLoading, hasMore]);
+  }, [displayedRows, sortedAndFilteredData.length, isLoading, hasMore]);
 
   // Infinite scroll handler
   const handleScroll = useCallback(() => {
@@ -305,7 +351,7 @@ export default function HistoryDataTable({
     if (!container) return;
 
     const { scrollTop, scrollHeight, clientHeight } = container;
-    const threshold = 100; // Load more when 100px from bottom
+    const threshold = 100;
 
     if (scrollHeight - scrollTop <= clientHeight + threshold) {
       loadMoreData();
@@ -326,30 +372,26 @@ export default function HistoryDataTable({
     setDisplayedRows(15);
     setHasMore(true);
     setIsLoading(false);
+    setSelectedCell({ rowIndex: -1, columnId: "" }); // Reset selection on filter change
   }, [columnFilters]);
 
   return (
     <div className="h-[67vh] flex flex-col">
-      {/* Header with close button - Fixed */}
-      {/* <div className="flex-shrink-0 flex items-center justify-between p-4 border-b bg-blue-50">
-        <h2 className="text-lg font-semibold text-blue-600">Country History</h2>
-        <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
-          <X className="h-5 w-5" />
-        </Button>
-      </div> */}
-
-      {/* Table Container - Flexible height for scrolling */}
+      {/* Table Container - Single table for proper alignment */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Table Header - Fixed */}
-        <div className="flex-shrink-0 bg-gray-50 border-b border-gray-200">
-          <table className="w-full">
-            <thead>
+        <div
+          ref={tableContainerRef}
+          className="flex-1 overflow-auto scroll-smooth smooth-scroll focus:outline-none border border-gray-200 rounded-lg"
+          tabIndex={0}
+        >
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-50 sticky top-0 z-10">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200 bg-gray-50"
                       style={{
                         width: `${header.getSize()}px`,
                         minWidth: `${
@@ -366,28 +408,30 @@ export default function HistoryDataTable({
                 </tr>
               ))}
             </thead>
-          </table>
-        </div>
-
-        {/* Scrollable Table Body */}
-        <div
-          ref={tableContainerRef}
-          className="flex-1 overflow-auto scroll-smooth smooth-scroll"
-        >
-          <table className="w-full">
-            <tbody className="bg-white divide-y divide-gray-200">
-              {visibleRows.map((row) => (
-                <tr key={row.id} className="hover:bg-gray-50">
+            <tbody className="divide-y divide-gray-200">
+              {visibleRows.map((row, index) => (
+                <tr
+                  key={row.id}
+                  className={`
+        ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+        hover:bg-gray-100
+      `}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
-                      className="px-3 py-2 whitespace-nowrap text-sm"
+                      className={`px-3 py-2 whitespace-nowrap text-sm cursor-pointer ${
+                        isCellSelected(row.index, cell.column.id)
+                          ? "ring-2 ring-blue-500 ring-inset bg-blue-50"
+                          : ""
+                      }`}
                       style={{
                         width: `${cell.column.getSize()}px`,
                         minWidth: `${
                           cell.column.columnDef.minSize || cell.column.getSize()
                         }px`,
                       }}
+                      onClick={() => handleCellClick(row.index, cell.column.id)}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -411,16 +455,16 @@ export default function HistoryDataTable({
           )}
 
           {/* End of data indicator */}
-          {!hasMore && filteredData.length > 15 && (
+          {!hasMore && sortedAndFilteredData.length > 15 && (
             <div className="flex justify-center items-center py-8">
               <span className="text-sm text-gray-500">
-                All {filteredData.length} entries loaded
+                All {sortedAndFilteredData.length} entries loaded
               </span>
             </div>
           )}
 
           {/* No data message */}
-          {filteredData.length === 0 && (
+          {sortedAndFilteredData.length === 0 && (
             <div className="flex justify-center items-center py-8">
               <span className="text-sm text-gray-500">
                 No entries found matching your filters
@@ -434,28 +478,24 @@ export default function HistoryDataTable({
       <div className="flex-shrink-0 border-t bg-gray-50 px-4 py-2">
         <div className="flex items-center justify-between text-sm text-gray-600">
           <span>
-            Showing {Math.min(displayedRows, filteredData.length)} of{" "}
-            {filteredData.length} entries
+            Showing {Math.min(displayedRows, sortedAndFilteredData.length)} of{" "}
+            {sortedAndFilteredData.length} entries
           </span>
+          {selectedCell.rowIndex !== -1 && (
+            <span className="text-blue-600">
+              Selected: Row {selectedCell.rowIndex + 1}, Column{" "}
+              {selectedCell.columnId}
+            </span>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-// Column Filter Header Component (same as before)
-function ColumnFilterHeader({
-  column,
-  title,
-  options,
-}: {
-  column: any;
-  title: string;
-  options: string[];
-}) {
-  const [filterValue, setFilterValue] = useState("");
+// Column Filter Header Component
+function ColumnFilterHeader({ column, title }: { column: any; title: string }) {
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const currentFilter = column.getFilterValue();
   const sortDirection = column.getIsSorted();
 
@@ -465,33 +505,18 @@ function ColumnFilterHeader({
     }
   }, [currentFilter]);
 
-  const handleOptionToggle = (option: string) => {
-    const newSelectedOptions = selectedOptions.includes(option)
-      ? selectedOptions.filter((item) => item !== option)
-      : [...selectedOptions, option];
-
-    setSelectedOptions(newSelectedOptions);
-    column.setFilterValue(
-      newSelectedOptions.length > 0 ? newSelectedOptions : undefined
-    );
-  };
-
-  const clearFilter = () => {
-    setSelectedOptions([]);
-    column.setFilterValue(undefined);
-  };
-
   const toggleSorting = () => {
-    if (sortDirection === "asc") {
+    if (!sortDirection) {
+      // No sorting currently, set to ascending
+      column.toggleSorting(false);
+    } else if (sortDirection === "asc") {
+      // Currently ascending, set to descending
       column.toggleSorting(true);
     } else {
-      column.toggleSorting(false);
+      // Currently descending, clear sorting
+      column.clearSorting();
     }
   };
-
-  const filteredOptions = options.filter((option) =>
-    option.toString().toLowerCase().includes(filterValue.toLowerCase())
-  );
 
   return (
     <div className="flex items-center gap-1 group">
@@ -515,67 +540,6 @@ function ColumnFilterHeader({
         )}
       </button>
 
-      {/* Filter button - only show if there are options */}
-      {options.length > 0 && (
-        <div
-          className={`flex-shrink-0 ${
-            isFilterOpen || selectedOptions.length > 0
-              ? "opacity-100"
-              : "opacity-0 group-hover:opacity-100"
-          } transition-opacity`}
-        >
-          <DropdownMenu onOpenChange={setIsFilterOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-5 w-5 p-0 ${
-                  selectedOptions.length > 0 ? "text-blue-600" : "text-gray-500"
-                }`}
-              >
-                <Filter className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48">
-              <div className="p-2">
-                <Input
-                  placeholder={`Search ${title}`}
-                  value={filterValue}
-                  onChange={(e) => setFilterValue(e.target.value)}
-                  className="h-7 text-sm"
-                />
-              </div>
-
-              <DropdownMenuSeparator />
-
-              {/* Options List */}
-              <div className="max-h-48 overflow-y-auto scroll-smooth smooth-scroll">
-                {filteredOptions.map((option) => (
-                  <DropdownMenuCheckboxItem
-                    key={option}
-                    checked={selectedOptions.includes(option)}
-                    onCheckedChange={() => handleOptionToggle(option)}
-                  >
-                    {option}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </div>
-
-              {/* Clear Filter */}
-              {selectedOptions.length > 0 && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={clearFilter}>
-                    <X className="mr-2 h-3 w-3" />
-                    Clear filter
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )}
-
       {/* Filter count indicator */}
       {selectedOptions.length > 0 && (
         <span className="ml-1 text-xs text-blue-500 flex-shrink-0">
@@ -583,27 +547,5 @@ function ColumnFilterHeader({
         </span>
       )}
     </div>
-  );
-}
-
-function DropdownMenuCheckboxItem({
-  children,
-  checked,
-  onCheckedChange,
-  ...props
-}: {
-  children: React.ReactNode;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-}) {
-  return (
-    <DropdownMenuItem
-      className="flex items-center gap-2"
-      onSelect={(e) => e.preventDefault()}
-      {...props}
-    >
-      <Checkbox checked={checked} onCheckedChange={onCheckedChange} />
-      {children}
-    </DropdownMenuItem>
   );
 }

@@ -14,6 +14,10 @@ const mockCountries = [
     updatedAt: "2023-11-20",
     draftedAt: "2023-01-10",
     actionMessage: "2h",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "2",
@@ -27,6 +31,10 @@ const mockCountries = [
     updatedAt: "2023-10-15",
     draftedAt: "2023-01-12",
     actionMessage: "2h ",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "3",
@@ -40,6 +48,10 @@ const mockCountries = [
     updatedAt: "2023-11-10",
     draftedAt: "2023-01-25",
     actionMessage: "20m",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "4",
@@ -53,6 +65,10 @@ const mockCountries = [
     updatedAt: "2023-11-05",
     draftedAt: "2023-02-05",
     actionMessage: "15 Apr",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "5",
@@ -65,6 +81,10 @@ const mockCountries = [
     updatedAt: "2023-10-28",
     draftedAt: "2023-02-08",
     actionMessage: "15 Apr 2023",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "6",
@@ -77,6 +97,10 @@ const mockCountries = [
     updatedAt: "2023-11-15",
     draftedAt: "2023-02-20",
     actionMessage: "15 Apr 2024",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "7",
@@ -89,6 +113,10 @@ const mockCountries = [
     updatedAt: "2023-11-08",
     draftedAt: "2023-03-05",
     actionMessage: "15 Apr 2024",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "8",
@@ -101,6 +129,10 @@ const mockCountries = [
     updatedAt: "2023-10-22",
     draftedAt: "2023-03-15",
     actionMessage: "15 Apr 2024",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "9",
@@ -113,6 +145,10 @@ const mockCountries = [
     updatedAt: "2023-11-25",
     draftedAt: "2023-03-25",
     actionMessage: "15 Apr 2024",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "10",
@@ -125,6 +161,10 @@ const mockCountries = [
     updatedAt: "2023-11-18",
     draftedAt: "2023-04-05",
     actionMessage: "2h ",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "11",
@@ -137,6 +177,10 @@ const mockCountries = [
     updatedAt: "2023-09-10",
     draftedAt: "2023-04-10",
     actionMessage: "2h ",
+    isActive: false,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "12",
@@ -149,6 +193,10 @@ const mockCountries = [
     updatedAt: "2023-11-12",
     draftedAt: "2023-04-25",
     actionMessage: "2h ",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "13",
@@ -160,6 +208,10 @@ const mockCountries = [
     createdAt: "2023-05-10",
     updatedAt: "2023-10-30",
     draftedAt: "2023-05-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "14",
@@ -171,6 +223,10 @@ const mockCountries = [
     createdAt: "2023-05-20",
     updatedAt: "2023-11-02",
     draftedAt: "2023-05-15",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "15",
@@ -182,6 +238,10 @@ const mockCountries = [
     createdAt: "2023-06-01",
     updatedAt: "2023-11-08",
     draftedAt: "2023-05-25",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "16",
@@ -193,6 +253,10 @@ const mockCountries = [
     createdAt: "2023-06-10",
     updatedAt: "2023-10-25",
     draftedAt: "2023-06-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "17",
@@ -204,6 +268,10 @@ const mockCountries = [
     createdAt: "2023-06-15",
     updatedAt: "2023-06-20",
     draftedAt: "2023-06-12",
+    isActive: false,
+    isDraft: true,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "18",
@@ -215,6 +283,10 @@ const mockCountries = [
     createdAt: "2023-07-01",
     updatedAt: "2023-11-15",
     draftedAt: "2023-06-25",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "19",
@@ -226,6 +298,10 @@ const mockCountries = [
     createdAt: "2023-07-10",
     updatedAt: "2023-10-18",
     draftedAt: "2023-07-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
   {
     id: "20",
@@ -237,15 +313,21 @@ const mockCountries = [
     createdAt: "2023-07-20",
     updatedAt: "2023-09-15",
     draftedAt: "2023-07-15",
+    isActive: false,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
   },
 ];
 
 export default function CountriesDataTable2({
   viewMode,
   setViewMode,
+  dataTableFilter,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
+  dataTableFilter: any;
 }) {
   const componentColumns = [
     {
@@ -264,6 +346,9 @@ export default function CountriesDataTable2({
       },
       size: 180,
       minSize: 120,
+      meta: {
+        exportLabel: "title",
+      },
     },
     {
       accessorKey: "code",
@@ -279,6 +364,9 @@ export default function CountriesDataTable2({
       },
       size: 120,
       minSize: 80,
+      meta: {
+        exportLabel: "code",
+      },
     },
     {
       accessorKey: "callingCode",
@@ -296,6 +384,9 @@ export default function CountriesDataTable2({
       },
       size: 50,
       minSize: 50,
+      meta: {
+        exportLabel: "callingCode",
+      },
     },
     {
       accessorKey: "currency",
@@ -315,6 +406,9 @@ export default function CountriesDataTable2({
       },
       size: 150,
       minSize: 100,
+      meta: {
+        exportLabel: "currency",
+      },
     },
     {
       accessorKey: "status",
@@ -330,6 +424,9 @@ export default function CountriesDataTable2({
       },
       size: 120,
       minSize: 80,
+      meta: {
+        exportLabel: "status",
+      },
     },
     {
       accessorKey: "createdAt",
@@ -350,6 +447,9 @@ export default function CountriesDataTable2({
       },
       size: 130,
       minSize: 100,
+      meta: {
+        exportLabel: "createdAt",
+      },
     },
     {
       accessorKey: "updatedAt",
@@ -370,6 +470,9 @@ export default function CountriesDataTable2({
       },
       size: 130,
       minSize: 100,
+      meta: {
+        exportLabel: "updatedAt",
+      },
     },
     {
       accessorKey: "draftedAt",
@@ -390,12 +493,30 @@ export default function CountriesDataTable2({
       },
       size: 130,
       minSize: 100,
+      meta: {
+        exportLabel: "draftedAt",
+      },
     },
   ];
 
+  const filteredData = mockCountries.filter((country) => {
+    if (dataTableFilter.status === "Active") {
+      return country.isActive;
+    } else if (dataTableFilter.status === "Inactive") {
+      return !country.isActive;
+    } else if (dataTableFilter.status === "Draft") {
+      return country.isDraft;
+    } else if (dataTableFilter.status === "Deleted") {
+      return country.isDeleted;
+    } else if (dataTableFilter.status === "Updated") {
+      return country.isUpdated;
+    }
+    return true;
+  });
+
   return (
     <FixedColumnDataTable
-      columnData={mockCountries}
+      columnData={filteredData}
       viewMode={viewMode}
       setViewMode={setViewMode}
       componentColumns={componentColumns}

@@ -120,7 +120,9 @@ html {
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --primary: #28ace2;
+  --primary-initial: #04161d;
+  --primary-hover: #28ace2;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -158,6 +160,8 @@ html {
   --brand-800: #1e40af;
   --brand-900: #1e3a8a;
   --brand-950: #172554;
+
+  /* --primary: #28ace2; */
 }
 
 .dark {

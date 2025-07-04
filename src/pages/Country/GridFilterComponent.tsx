@@ -83,11 +83,11 @@ export default function SimpleFilterComponent({
       {/* Fixed Header */}
       <div className="border-b px-3 py-2 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <div className="relative flex-1">
+          <div className="relative flex-1 rounded-full">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
             <Input
-              placeholder="Search filters..."
-              className="pl-8 h-8 w-full"
+              placeholder="Search..."
+              className="pl-8 h-8 w-full rounded-full"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -132,9 +132,9 @@ export default function SimpleFilterComponent({
                     onCheckedChange={(checked) =>
                       handleParentCheck(key, checked)
                     }
-                    className="data-[state=checked]:bg-blue-500 data-[state=checked]:text-blue-500"
+                    className="data-[state=checked]:bg-blue-500 data-[state=checked]:text-white"
                   />
-                  {key}
+                  <span className="text-primary">{key}</span>
                 </div>
 
                 <div className="ml-4 space-y-1">
@@ -152,9 +152,9 @@ export default function SimpleFilterComponent({
                           onCheckedChange={(checked) =>
                             handleChildCheck(key, val, checked)
                           }
-                          className="data-[state=checked]:bg-blue-500 data-[state=checked]:text-blue-500"
+                          className="data-[state=checked]:bg-blue-500 data-[state=checked]:text-white text-primary"
                         />
-                        <span className="text-sm">{val}</span>
+                        <span className="text-sm text-primary">{val}</span>
                       </div>
                     ))}
                 </div>
@@ -167,14 +167,19 @@ export default function SimpleFilterComponent({
       <div className="bg-white dark:bg-gray-900 border-t px-4 py-2">
         <div className="flex justify-between">
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-gray-800"
+            className="dark:hover:bg-gray-800 rounded-full"
             onClick={resetFilters}
           >
             Reset
           </Button>
-          <Button variant="default" size="sm" onClick={applyFilters}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full"
+            onClick={applyFilters}
+          >
             Apply
           </Button>
         </div>

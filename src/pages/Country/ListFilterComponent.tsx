@@ -36,15 +36,15 @@ export default function FilterComponent({
   };
 
   return (
-    <div className="w-72 h-[55vh] flex flex-col border rounded-lg overflow-hidden">
+    <div className="w-72 h-full flex flex-col border rounded-lg overflow-hidden">
       {/* Header */}
       <div className="bg-white dark:bg-gray-900 border-b px-3 py-2">
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
+        <div className="flex items-center gap-2 ">
+          <div className="relative flex-1 rounded-full">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
             <Input
-              placeholder="Search filters..."
-              className="pl-8 h-8 w-full"
+              placeholder="Search..."
+              className="pl-8 h-8 w-full rounded-full"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -106,9 +106,9 @@ export default function FilterComponent({
                         col.setFilterValue([]);
                       }
                     }}
-                    className="data-[state=checked]:bg-blue-500 data-[state=checked]:text-blue-500"
+                    className=""
                   />
-                  {col.id}
+                  <span className="">{col.id}</span>
                 </div>
 
                 {/* Children */}
@@ -126,7 +126,7 @@ export default function FilterComponent({
                           else newValues.delete(value);
                           col.setFilterValue([...newValues]);
                         }}
-                        className="data-[state=checked]:bg-blue-500 data-[state=checked]:text-blue-500"
+                        className=""
                       />
                       <span className="text-sm">
                         {String(value)} ({count})
@@ -143,9 +143,9 @@ export default function FilterComponent({
       <div className="bg-white dark:bg-gray-900 border-t px-3 py-2">
         <div className="flex justify-end">
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-gray-800"
+            className="rounded-full"
             onClick={resetFilters}
           >
             Reset

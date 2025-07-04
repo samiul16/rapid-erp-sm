@@ -87,6 +87,7 @@ export default function CommonDataTable({
   columnData: any[];
   fixedColumns?: string[]; // Array of column accessorKeys to be fixed
 }) {
+  console.log("Column data:", columnData);
   const [data, setData] = useState(columnData);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = useState({});
@@ -108,6 +109,24 @@ export default function CommonDataTable({
   const { t } = useTranslation();
   const [showVisibility, setShowVisibility] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setData(columnData);
+  }, [columnData]);
+
+  const [globalFilter, setGlobalFilter] = useState<string | RegExp>("");
+
+  const handleSearch = (value: string) => {
+    setSearchQuery(value);
+    try {
+      // Create case-insensitive regex pattern
+      const regex = new RegExp(value, "i");
+      setGlobalFilter(regex);
+    } catch {
+      // Fallback to simple string search if regex fails
+      setGlobalFilter(value);
+    }
+  };
 
   // Helper function to calculate fixed column position
   const getFixedColumnPosition = useCallback(
@@ -175,7 +194,7 @@ export default function CommonDataTable({
                     table.toggleAllPageRowsSelected(!!value)
                   }
                   aria-label="Select all"
-                  className="w-4 h-4 cursor-pointer data-[state=checked]:bg-blue-500 data-[state=checked]:text-blue-500"
+                  className="w-4 h-4 cursor-pointer data-[state=checked]:bg-primary data-[state=checked]:text-white"
                 />
               )}
             </div>
@@ -194,7 +213,7 @@ export default function CommonDataTable({
           >
             <Checkbox
               checked={row.getIsSelected()}
-              className="w-4 h-4 cursor-pointer data-[state=checked]:bg-blue-500 data-[state=checked]:text-white"
+              className="w-4 h-4 cursor-pointer data-[state=checked]:bg-primary data-[state=checked]:text-white"
               onCheckedChange={(value) => row.toggleSelected(!!value)}
               aria-label="Select row"
             />
@@ -212,6 +231,8 @@ export default function CommonDataTable({
 
     componentColumns.forEach((componentColumn: any) => {
       const isFixed = fixedColumns.includes(componentColumn.accessorKey);
+
+      console.log("Preparing column", componentColumn);
 
       if (componentColumn.accessorKey === "status") {
         columns.push({
@@ -242,6 +263,7 @@ export default function CommonDataTable({
           meta: {
             isFixed,
             fixedPosition: isFixed ? "left" : undefined,
+            exportLabel: componentColumn.meta?.exportLabel,
           },
         });
       } else {
@@ -273,6 +295,7 @@ export default function CommonDataTable({
           meta: {
             isFixed,
             fixedPosition: isFixed ? "left" : undefined,
+            exportLabel: componentColumn.meta?.exportLabel,
           },
         });
       }
@@ -291,7 +314,7 @@ export default function CommonDataTable({
               variant="ghost"
               size="sm"
               onClick={() => goToDetails("1")}
-              className="bg-blue-300 hover:bg-blue-600 text-white rounded-full cursor-pointer"
+              className="hover:bg-blue-600 text-white rounded-full cursor-pointer"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -323,6 +346,7 @@ export default function CommonDataTable({
       rowSelection,
       columnVisibility,
       pagination,
+      globalFilter,
     },
     getRowId: (row) => row.id,
     enableRowSelection: true,
@@ -336,6 +360,16 @@ export default function CommonDataTable({
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    globalFilterFn: (row, columnId, filterValue) => {
+      // For regex objects
+      if (filterValue instanceof RegExp) {
+        return filterValue.test(row.getValue(columnId));
+      }
+      // Fallback to string includes
+      return String(row.getValue(columnId))
+        .toLowerCase()
+        .includes(filterValue.toLowerCase());
+    },
     columnResizeMode: "onChange",
   });
 
@@ -499,7 +533,7 @@ export default function CommonDataTable({
             <Button
               variant="outline"
               onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-              className="gap-2 cursor-pointer hover:bg-blue-500 hover:text-white rounded-full  min-w-[60px] sm:min-w-[80px]"
+              className="gap-2 cursor-pointer hover:bg-primary rounded-full  min-w-[60px] sm:min-w-[80px]"
             >
               {viewMode === "grid" ? (
                 <>
@@ -516,8 +550,8 @@ export default function CommonDataTable({
 
             <Button
               variant="outline"
-              className={`gap-2 cursor-pointer hover:bg-blue-500 hover:text-white rounded-full ${
-                showVisibility ? "bg-blue-400 text-white" : ""
+              className={`gap-2 cursor-pointer hover:bg-primary rounded-full ${
+                showVisibility ? "bg-primary text-white" : ""
               }`}
               onClick={() => {
                 setShowVisibility(!showVisibility);
@@ -541,7 +575,7 @@ export default function CommonDataTable({
                   Delete
                 </Button>
                 <Button
-                  className="disabled:opacity-500 cursor-pointer hover:bg-blue-500 hover:text-white rounded-full"
+                  className="disabled:opacity-500 cursor-pointer hover:bg-primary rounded-full"
                   variant="outline"
                   size="sm"
                   onClick={handleBulkUpdate}
@@ -561,15 +595,21 @@ export default function CommonDataTable({
                   placeholder="Search..."
                   className="pl-9 pr-9 w-full rounded-full"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearch(e.target.value)}
                 />
-                <Tooltip label="Search by voice">
+                <Tooltip
+                  arrowOffset={10}
+                  arrowSize={7}
+                  withArrow
+                  position="top"
+                  label="Search by voice"
+                >
                   <Button
                     variant="outline"
                     size="icon"
-                    className="absolute right-2 h-6 w-6 rounded-full cursor-pointer p-0"
+                    className="absolute right-2 h-6 w-6 rounded-full cursor-pointer bg-primary p-0"
                   >
-                    <Mic className="h-4 w-4 text-blue-400" />
+                    <Mic className="h-4 w-4 text-white" />
                   </Button>
                 </Tooltip>
               </div>
@@ -586,8 +626,8 @@ export default function CommonDataTable({
 
             <Button
               variant="outline"
-              className={`gap-2 cursor-pointer hover:bg-blue-500 hover:text-white rounded-full ${
-                showExport ? "bg-blue-400 text-white" : ""
+              className={`gap-2 cursor-pointer hover:bg-primary rounded-full ${
+                showExport ? "bg-primary text-white" : ""
               }`}
               onClick={() => {
                 setShowExport(!showExport);
@@ -601,8 +641,8 @@ export default function CommonDataTable({
 
             <Button
               variant="outline"
-              className={`gap-2 cursor-pointer hover:bg-blue-500 hover:text-white rounded-full ${
-                showFilter ? "bg-blue-400 text-white" : ""
+              className={`gap-2 cursor-pointer hover:bg-primary rounded-full ${
+                showFilter ? "bg-primary text-white" : ""
               }`}
               onClick={() => {
                 setShowFilter(!showFilter);
@@ -622,7 +662,11 @@ export default function CommonDataTable({
           {/* Table with scrollable body */}
           <div
             ref={tableContainerRef}
-            className="flex-1 overflow-auto scroll-smooth smooth-scroll focus:outline-none border border-gray-200 rounded-lg min-h-0"
+            className={`flex-1 scroll-smooth smooth-scroll focus:outline-none border border-gray-200 rounded-lg min-h-0 ${
+              pagination.pageSize === 10
+                ? "overflow-x-auto overflow-y-hidden"
+                : "overflow-auto"
+            }`}
             tabIndex={0}
             style={{
               height: "calc(100vh - 200px)", // Adjust based on your footer height and other elements
@@ -700,7 +744,7 @@ export default function CommonDataTable({
                           key={cell.id}
                           className={`px-4 py-3 whitespace-nowrap border-b border-gray-200 ${
                             isCellSelected(row.index, cell.column.id)
-                              ? "ring-2 ring-blue-500 ring-inset bg-blue-50"
+                              ? "ring-2 ring-primary ring-inset bg-white"
                               : "hover:bg-gray-100 dark:hover:bg-gray-800"
                           } ${
                             isFixed
@@ -1302,10 +1346,10 @@ function PaginationControls({ table }: { table: any }) {
             }
             size="sm"
             onClick={() => table.setPageSize(Number(pageSize))}
-            className={`min-w-[40px] ${
+            className={`min-w-[40px] cursor-pointer ${
               table.getState().pagination.pageSize === pageSize
-                ? "bg-blue-500 text-white hover:bg-blue-600"
-                : "bg-white text-blue-500 border-blue-500 hover:bg-blue-50"
+                ? "bg-primary text-white hover:bg-primary"
+                : "bg-white text-primary border-primary hover:bg-primary"
             }`}
           >
             {pageSize}
@@ -1318,7 +1362,7 @@ function PaginationControls({ table }: { table: any }) {
             <Button
               size="sm"
               variant="outline"
-              className="min-w-[20px] bg-white text-blue-500 border-blue-500 hover:bg-blue-50"
+              className="min-w-[20px] bg-white text-primary border-primary hover:bg-primary"
             >
               <MoreHorizontal className="w-4 h-4" />
             </Button>
@@ -1339,10 +1383,10 @@ function PaginationControls({ table }: { table: any }) {
                   }
                   size="sm"
                   onClick={() => table.setPageSize(Number(pageSize))}
-                  className={`min-w-[40px] ${
+                  className={`min-w-[40px] cursor-pointer ${
                     table.getState().pagination.pageSize === pageSize
-                      ? "bg-blue-500 text-white hover:bg-blue-600"
-                      : "bg-white text-blue-500 border-blue-500 hover:bg-blue-50"
+                      ? "bg-primary text-white hover:bg-primary"
+                      : "bg-white text-primary border-primary hover:bg-primary"
                   }`}
                 >
                   {pageSize}
@@ -1366,7 +1410,7 @@ function PaginationControls({ table }: { table: any }) {
           size="sm"
           onClick={() => table.setPageIndex(0)}
           disabled={!table.getCanPreviousPage()}
-          className="bg-white hover:bg-gray-50"
+          className=""
         >
           <ChevronsLeft className="h-4 w-4" />
         </Button>
@@ -1375,7 +1419,7 @@ function PaginationControls({ table }: { table: any }) {
           size="sm"
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
-          className="bg-white hover:bg-gray-50"
+          className=""
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -1401,7 +1445,7 @@ function PaginationControls({ table }: { table: any }) {
           size="sm"
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
-          className="bg-white hover:bg-gray-50"
+          className=""
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -1410,7 +1454,7 @@ function PaginationControls({ table }: { table: any }) {
           size="sm"
           onClick={() => table.setPageIndex(table.getPageCount() - 1)}
           disabled={!table.getCanNextPage()}
-          className="bg-white hover:bg-gray-50"
+          className=""
         >
           <ChevronsRight className="h-4 w-4" />
         </Button>
@@ -1438,7 +1482,7 @@ function DropdownMenuCheckboxItem({
       <Checkbox
         checked={checked}
         onCheckedChange={onCheckedChange}
-        className="data-[state=checked]:bg-blue-500 data-[state=checked]:text-blue-500"
+        className="data-[state=checked]:bg-primary data-[state=checked]:text-white"
       />
       {children}
     </DropdownMenuItem>

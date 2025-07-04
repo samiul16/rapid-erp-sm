@@ -27,6 +27,7 @@ import AreasPage from "./pages/area/AreasPage";
 import CurrenciesPage from "./pages/currencies/CurrenciesPage";
 import CurrencyDetails from "./pages/currencies/CurrencyDetails";
 import CurrencyForm from "./pages/currencies/CreateEditPage";
+import EditPage from "./pages/Country/EditPage";
 
 function App() {
   return (
@@ -52,6 +53,12 @@ function App() {
                 path="/countries/:id/edit"
                 element={<CountryFormPage isEdit={true} />}
               />
+              <Route
+                path="/countries/edit/:id"
+                element={<EditPage isEdit={true} />}
+              />
+              <Route path="/countries/view" element={<CountryDetails />} />
+
               <Route path="/users" element={<UsersPage />} />
               <Route path="/users/:id" element={<UserDetails />} />
               <Route

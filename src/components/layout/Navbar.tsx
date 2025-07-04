@@ -158,7 +158,7 @@ const Navbar = () => {
       <div className="grid grid-cols-12 gap-4 h-full items-center">
         {/* Left: Brand Logo - 2 columns */}
         <div className="col-span-2">
-          <div className="text-2xl font-bold text-brand dark:text-brand text-blue-500">
+          <div className="text-2xl font-bold text-brand dark:text-brand text-primary">
             RAPID
           </div>
         </div>

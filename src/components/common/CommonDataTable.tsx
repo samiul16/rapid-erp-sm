@@ -221,7 +221,7 @@ export default function CommonDataTable({
             variant="ghost"
             size="sm"
             onClick={() => handleDelete()}
-            className="bg-blue-300 hover:bg-blue-600 text-white rounded-full"
+            className="hover:bg-blue-600 text-white rounded-full"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -424,7 +424,7 @@ export default function CommonDataTable({
             <Button
               variant="outline"
               onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-              className="gap-2 cursor-pointer bg-blue-200 hover:bg-blue-700 text-blue-700 hover:text-white rounded-full  min-w-[60px] sm:min-w-[80px]"
+              className="gap-2 cursor-pointer hover:bg-blue-700 text-blue-700 hover:text-white rounded-full  min-w-[60px] sm:min-w-[80px]"
             >
               {viewMode === "grid" ? (
                 <>
@@ -441,7 +441,7 @@ export default function CommonDataTable({
 
             <Button
               variant="outline"
-              className={`gap-2 cursor-pointer bg-blue-200 hover:bg-blue-500 text-blue-700 hover:text-white rounded-full ${
+              className={`gap-2 cursor-pointer hover:bg-blue-500 text-blue-700 hover:text-white rounded-full ${
                 showVisibility ? "bg-blue-400 text-white" : ""
               }`}
               onClick={() => {
@@ -466,7 +466,7 @@ export default function CommonDataTable({
                   Delete
                 </Button>
                 <Button
-                  className="disabled:opacity-500 cursor-pointer bg-blue-200 hover:bg-blue-500 text-blue-700 hover:text-white rounded-full"
+                  className="disabled:opacity-500 cursor-pointer hover:bg-blue-500 text-blue-700 hover:text-white rounded-full"
                   variant="outline"
                   size="sm"
                   onClick={handleBulkUpdate}
@@ -483,7 +483,7 @@ export default function CommonDataTable({
               <div className="relative flex items-center rounded-full">
                 <Search className="absolute left-3 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search states..."
+                  placeholder="Search..."
                   className="pl-9 pr-9 w-full rounded-full"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
