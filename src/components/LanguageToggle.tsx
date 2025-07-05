@@ -5,11 +5,16 @@ const LanguageToggle = () => {
 
   const toggleLang = () => {
     const newLang = i18n.language === "ar" ? "en" : "ar";
+
+    // Set language and direction
     document.documentElement.setAttribute(
       "dir",
       newLang === "ar" ? "rtl" : "ltr"
     );
     i18n.changeLanguage(newLang);
+
+    // Save language to localStorage
+    localStorage.setItem("lang", newLang);
   };
 
   return (
