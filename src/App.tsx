@@ -28,8 +28,22 @@ import CurrenciesPage from "./pages/currencies/CurrenciesPage";
 import CurrencyDetails from "./pages/currencies/CurrencyDetails";
 import CurrencyForm from "./pages/currencies/CreateEditPage";
 import EditPage from "./pages/Country/EditPage";
+import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 function App() {
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem("lang") || "en";
+
+    // Set the saved language and direction
+    document.documentElement.setAttribute(
+      "dir",
+      savedLang === "ar" ? "rtl" : "ltr"
+    );
+    i18n.changeLanguage(savedLang);
+  }, [i18n]);
   return (
     <div className="scroll-smooth">
       <BrowserRouter>
