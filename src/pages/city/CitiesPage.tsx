@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import CityDataTable from "@/pages/city/CItyDataTableComponent";
 
 export default function CitiesPage() {
+  console.log("Added for production live test");
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState("grid");
   const { t } = useTranslation();
